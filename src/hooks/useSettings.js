@@ -41,3 +41,24 @@ export function calcMaxRedemption(subtotal, points, loyalty) {
   const maxByPercent = Math.floor(subtotal * loyalty.maxRedeemPct / 100)
   return Math.min(pointsValue, maxByPercent)
 }
+
+/**
+ * Returns true if the customer's loyalty points have expired.
+ * loyaltyPointsUpdatedAt: Firestore Timestamp or JS Date of last points change.
+ * If expiryDays is 0 (never expire), always returns false.
+ */
+export function arePointsExpired(loyaltyPointsUpdatedAt, loyalty) {
+  if (!loyalty.expiryDays || loyalty.expiryDays <= 0) return false
+  if (!loyaltyPointsUpdatedAt) return false
+  const updated = loyaltyPointsUpdatedAt?.toDate?.() ?? new Date(loyaltyPointsUpdatedAt)
+  const expiresAt = new Date(updated.getTime() + loyalty.expiryDays * 24 * 60 * 60 * 1000)
+  return new Date() > expiresAt
+}
+
+/**
+ * Returns the effective loyalty points for a customer, zeroing out if expired.
+ */
+export function getEffectivePoints(customer, loyalty) {
+  if (arePointsExpired(customer.loyaltyPointsUpdatedAt, loyalty)) return 0
+  return customer.loyaltyPoints ?? 0
+}

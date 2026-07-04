@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, updateDoc, increment, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
-import { useSettings, calcPointsEarned, calcMaxRedemption } from '../../hooks/useSettings'
+import { useSettings, calcPointsEarned, calcMaxRedemption, getEffectivePoints } from '../../hooks/useSettings'
 import PageHeader from '../../components/PageHeader'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
@@ -56,7 +56,7 @@ export default function Billing() {
     const c = customers.find((x) => x.id === id)
     if (c) {
       setCustomerName(c.name)
-      setCustomerPoints(c.loyaltyPoints ?? 0)
+      setCustomerPoints(getEffectivePoints(c, loyalty))
     } else {
       setCustomerPoints(0)
     }

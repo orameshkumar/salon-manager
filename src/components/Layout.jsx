@@ -12,6 +12,7 @@ const NAV = [
   { to: '/attendance',  label: 'Attendance',  icon: '🕐' },
   { to: '/staff',       label: 'Staff',       icon: '👥' },
   { to: '/services',    label: 'Services',    icon: '✂' },
+  { to: '/reports',     label: 'Reports',     icon: '📊' },
   { to: '/settings',    label: 'Settings',    icon: '⚙' },
 ]
 

@@ -11,6 +11,7 @@ import Attendance from './pages/attendance/Attendance'
 import Staff from './pages/staff/Staff'
 import Services from './pages/services/Services'
 import Settings from './pages/settings/Settings'
+import Reports from './pages/reports/Reports'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
@@ -31,6 +32,7 @@ function AppRoutes() {
       <Route path="/staff" element={<ProtectedRoute><Staff /></ProtectedRoute>} />
       <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
