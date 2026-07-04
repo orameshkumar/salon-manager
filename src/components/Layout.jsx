@@ -3,18 +3,19 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
 
+// roles: undefined = all roles; otherwise array of allowed roles
 const NAV = [
-  { to: '/',            label: 'Dashboard',   icon: '⊞' },
-  { to: '/customers',   label: 'Customers',   icon: '👤' },
-  { to: '/appointments',label: 'Appointments',icon: '📅' },
-  { to: '/billing',     label: 'Billing',     icon: '🧾' },
-  { to: '/inventory',   label: 'Inventory',   icon: '📦' },
-  { to: '/attendance',  label: 'Attendance',  icon: '🕐' },
-  { to: '/staff',       label: 'Staff',       icon: '👥' },
-  { to: '/stations',    label: 'Stations',    icon: '💺' },
-  { to: '/services',    label: 'Services',    icon: '✂' },
-  { to: '/reports',     label: 'Reports',     icon: '📊' },
-  { to: '/settings',    label: 'Settings',    icon: '⚙' },
+  { to: '/',             label: 'Dashboard',    icon: '⊞' },
+  { to: '/customers',    label: 'Customers',    icon: '👤' },
+  { to: '/appointments', label: 'Appointments', icon: '📅' },
+  { to: '/billing',      label: 'Billing',      icon: '🧾' },
+  { to: '/inventory',    label: 'Inventory',    icon: '📦' },
+  { to: '/attendance',   label: 'Attendance',   icon: '🕐' },
+  { to: '/staff',        label: 'Staff',        icon: '👥',  roles: ['owner', 'manager'] },
+  { to: '/stations',     label: 'Stations',     icon: '💺',  roles: ['owner', 'manager'] },
+  { to: '/services',     label: 'Services',     icon: '✂',   roles: ['owner', 'manager'] },
+  { to: '/reports',      label: 'Reports',      icon: '📊',  roles: ['owner', 'manager'] },
+  { to: '/settings',     label: 'Settings',     icon: '⚙',   roles: ['owner', 'manager'] },
 ]
 
 export default function Layout({ children }) {
@@ -35,8 +36,8 @@ export default function Layout({ children }) {
           <p className="text-xs text-gray-500 mt-0.5">{profile?.branchName ?? 'Main Branch'}</p>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-0.5">
-          {NAV.map(({ to, label, icon }) => (
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          {NAV.filter(({ roles }) => !roles || roles.includes(profile?.role)).map(({ to, label, icon }) => (
             <NavLink
               key={to}
               to={to}

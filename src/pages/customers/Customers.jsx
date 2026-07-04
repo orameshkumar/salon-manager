@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
+import { useNavigate } from 'react-router-dom'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
 import PageHeader from '../../components/PageHeader'
@@ -9,6 +10,7 @@ const EMPTY = { name: '', phone: '', email: '', allergies: '' }
 
 export default function Customers() {
   const { docs: customers, loading } = useCollection('customers', 'name')
+  const navigate                     = useNavigate()
   const [search, setSearch]     = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editDoc, setEditDoc]   = useState(null)
@@ -170,6 +172,7 @@ export default function Customers() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
+                      <button className="text-xs text-brand-600 hover:underline" onClick={() => navigate(`/customers/${c.id}`)}>View</button>
                       <button className="text-xs text-blue-600 hover:underline" onClick={() => openEdit(c)}>Edit</button>
                       <button
                         className="text-xs text-red-600 hover:underline disabled:opacity-50"

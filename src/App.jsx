@@ -13,10 +13,18 @@ import Services from './pages/services/Services'
 import Settings from './pages/settings/Settings'
 import Reports from './pages/reports/Reports'
 import Stations from './pages/stations/Stations'
+import CustomerProfile from './pages/customers/CustomerProfile'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
   return user ? <Layout>{children}</Layout> : <Navigate to="/login" replace />
+}
+
+function ManagerRoute({ children }) {
+  const { user, profile } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+  if (!['owner', 'manager'].includes(profile?.role)) return <Navigate to="/" replace />
+  return <Layout>{children}</Layout>
 }
 
 function AppRoutes() {
@@ -30,11 +38,12 @@ function AppRoutes() {
       <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
       <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
       <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
-      <Route path="/staff" element={<ProtectedRoute><Staff /></ProtectedRoute>} />
-      <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-      <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-      <Route path="/stations" element={<ProtectedRoute><Stations /></ProtectedRoute>} />
+      <Route path="/staff" element={<ManagerRoute><Staff /></ManagerRoute>} />
+      <Route path="/services" element={<ManagerRoute><Services /></ManagerRoute>} />
+      <Route path="/settings" element={<ManagerRoute><Settings /></ManagerRoute>} />
+      <Route path="/reports" element={<ManagerRoute><Reports /></ManagerRoute>} />
+      <Route path="/stations" element={<ManagerRoute><Stations /></ManagerRoute>} />
+      <Route path="/customers/:id" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

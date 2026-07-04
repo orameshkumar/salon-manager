@@ -26,6 +26,7 @@ export default function Billing() {
       ]
 
   const [showForm, setShowForm]         = useState(false)
+  const [editDoc,  setEditDoc]          = useState(null)
   const [customerName, setCustomerName] = useState('')
   const [customerId, setCustomerId]     = useState('')
   const [customerPoints, setCustomerPoints] = useState(0)
@@ -63,7 +64,21 @@ export default function Billing() {
     setRedeemPoints(0)
   }
 
+  function openEdit(inv) {
+    setEditDoc(inv)
+    setCustomerName(inv.customerName)
+    setCustomerId(inv.customerId || '')
+    const c = customers.find((x) => x.id === inv.customerId)
+    setCustomerPoints(c ? getEffectivePoints(c, loyalty) : 0)
+    setSelectedServices(inv.services || [])
+    setDiscount(inv.discount ?? 0)
+    setRedeemPoints(inv.redeemPoints ?? 0)
+    setPaymentMode(inv.paymentMode || 'Cash')
+    setShowForm(true)
+  }
+
   function resetForm() {
+    setEditDoc(null)
     setCustomerName('')
     setCustomerId('')
     setCustomerPoints(0)
@@ -79,9 +94,9 @@ export default function Billing() {
     if (!selectedServices.length) { toast.error('Select at least one service'); return }
     setSaving(true)
     try {
-      // Auto-create customer in background
+      // Auto-create customer in background (new invoice only)
       let linkedId = customerId
-      if (!linkedId && customerName) {
+      if (!editDoc && !linkedId && customerName) {
         try {
           const existing = await getDocs(
             query(collection(db, 'customers'), where('name', '==', customerName.trim()))
@@ -101,32 +116,45 @@ export default function Billing() {
         }
       }
 
-      await addDoc(collection(db, 'invoices'), {
+      const payload = {
         customerName,
         customerId:    linkedId || null,
         services:      selectedServices,
         subtotal,
         discount:      Number(discount),
-        redeemPoints:  redeemPoints,
+        redeemPoints,
         redeemDiscount,
         total,
         pointsEarned,
         paymentMode,
         status:        'paid',
-        createdAt:     serverTimestamp(),
-      })
-
-      if (linkedId) {
-        await updateDoc(doc(db, 'customers', linkedId), {
-          totalVisits:   increment(1),
-          loyaltyPoints: increment(pointsEarned - redeemPoints),
-        })
       }
 
-      toast.success(`Invoice created · +${pointsEarned} pts earned${redeemPoints > 0 ? ` · ${redeemPoints} pts redeemed` : ''}`)
+      if (editDoc) {
+        // Reverse old points delta, apply new one
+        await updateDoc(doc(db, 'invoices', editDoc.id), { ...payload, updatedAt: serverTimestamp() })
+        if (linkedId) {
+          const oldDelta = (editDoc.pointsEarned ?? 0) - (editDoc.redeemPoints ?? 0)
+          const newDelta = pointsEarned - redeemPoints
+          await updateDoc(doc(db, 'customers', linkedId), {
+            loyaltyPoints: increment(newDelta - oldDelta),
+          })
+        }
+        toast.success('Invoice updated')
+      } else {
+        await addDoc(collection(db, 'invoices'), { ...payload, createdAt: serverTimestamp() })
+        if (linkedId) {
+          await updateDoc(doc(db, 'customers', linkedId), {
+            totalVisits:   increment(1),
+            loyaltyPoints: increment(pointsEarned - redeemPoints),
+          })
+        }
+        toast.success(`Invoice created · +${pointsEarned} pts earned${redeemPoints > 0 ? ` · ${redeemPoints} pts redeemed` : ''}`)
+      }
+
       resetForm()
     } catch {
-      toast.error('Failed to create invoice')
+      toast.error('Failed to save invoice')
     } finally {
       setSaving(false)
     }
@@ -157,12 +185,12 @@ export default function Billing() {
       <PageHeader
         title="Billing"
         subtitle={`Today's revenue: ₹${todayRevenue.toLocaleString()}`}
-        action={<button className="btn-primary" onClick={() => setShowForm(true)}>+ New invoice</button>}
+        action={<button className="btn-primary" onClick={() => { setEditDoc(null); setShowForm(true) }}>+ New invoice</button>}
       />
 
       {showForm && (
         <div className="card mb-6 border-brand-200">
-          <p className="text-sm font-medium text-gray-800 mb-4">New invoice</p>
+          <p className="text-sm font-medium text-gray-800 mb-4">{editDoc ? `Edit invoice — ${editDoc.customerName}` : 'New invoice'}</p>
           <form onSubmit={handleSave} className="space-y-4">
 
             {/* Customer */}
@@ -258,7 +286,7 @@ export default function Billing() {
             <div className="flex gap-2 justify-end">
               <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
               <button type="submit" className="btn-primary" disabled={saving}>
-                {saving ? 'Creating…' : 'Create invoice'}
+                {saving ? 'Saving…' : editDoc ? 'Update invoice' : 'Create invoice'}
               </button>
             </div>
           </form>
@@ -271,7 +299,7 @@ export default function Billing() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Customer', 'Services', 'Subtotal', 'Discount', 'Total', 'Pts Earned', 'Payment', 'Date', 'Actions'].map((h) => (
+                {['Customer', 'Services', 'Subtotal', 'Discount', 'Total', 'Pts Earned', 'Payment', 'Date', 'Actions'].map((h) => (  // eslint-disable-line
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
@@ -293,13 +321,16 @@ export default function Billing() {
                     {inv.createdAt?.toDate ? format(inv.createdAt.toDate(), 'dd MMM, h:mm a') : '—'}
                   </td>
                   <td className="px-4 py-3">
-                    <button
-                      className="text-xs text-red-600 hover:underline disabled:opacity-50"
-                      disabled={deleting === inv.id}
-                      onClick={() => handleDelete(inv)}
-                    >
-                      {deleting === inv.id ? '…' : 'Delete'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button className="text-xs text-blue-600 hover:underline" onClick={() => openEdit(inv)}>Edit</button>
+                      <button
+                        className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                        disabled={deleting === inv.id}
+                        onClick={() => handleDelete(inv)}
+                      >
+                        {deleting === inv.id ? '…' : 'Delete'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
