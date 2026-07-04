@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { collection, addDoc, serverTimestamp, Timestamp, query, where, getDocs } from 'firebase/firestore'
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, Timestamp, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
 import PageHeader from '../../components/PageHeader'
@@ -13,22 +13,54 @@ const STATUS_BADGE = {
   'no-show':  'badge-yellow',
 }
 
-const SERVICES = ['Haircut', 'Hair colour', 'Blowdry', 'Facial', 'Manicure', 'Pedicure', 'Threading', 'Waxing', 'Massage']
-const EMPTY = { customerName: '', customerPhone: '', service: '', stylist: '', date: '', time: '', notes: '' }
+const STATUSES  = ['scheduled', 'completed', 'cancelled', 'no-show']
+const EMPTY     = { customerName: '', customerPhone: '', service: '', stylist: '', date: '', time: '', notes: '' }
 
 export default function Appointments() {
   const { docs: appointments, loading } = useCollection('appointments', 'date')
-  const { docs: employees } = useCollection('employees', 'name')
+  const { docs: employees }             = useCollection('employees', 'name')
+  const { docs: services }              = useCollection('services', 'name')
+
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState(EMPTY)
-  const [saving, setSaving] = useState(false)
-  const [filter, setFilter] = useState('all')
+  const [editDoc, setEditDoc]   = useState(null)
+  const [form, setForm]         = useState(EMPTY)
+  const [saving, setSaving]     = useState(false)
+  const [deleting, setDeleting] = useState(null)
+  const [filter, setFilter]     = useState('all')
 
-  const stylists = employees.filter((e) => e.role === 'stylist' || e.role === 'staff')
+  const stylists     = employees.filter((e) => ['stylist', 'staff', 'manager', 'owner'].includes(e.role))
+  const serviceNames = services.length > 0
+    ? services.map((s) => s.name)
+    : ['Haircut', 'Hair colour', 'Blowdry', 'Facial', 'Manicure', 'Pedicure', 'Threading', 'Waxing', 'Massage']
 
-  const filtered = appointments.filter((a) =>
-    filter === 'all' ? true : a.status === filter
-  )
+  const filtered = appointments.filter((a) => filter === 'all' ? true : a.status === filter)
+
+  function openAdd() {
+    setEditDoc(null)
+    setForm(EMPTY)
+    setShowForm(true)
+  }
+
+  function openEdit(a) {
+    setEditDoc(a)
+    const d = a.date?.toDate?.()
+    setForm({
+      customerName:  a.customerName,
+      customerPhone: a.customerPhone,
+      service:       a.service,
+      stylist:       a.stylist || '',
+      date:          d ? format(d, 'yyyy-MM-dd') : '',
+      time:          d ? format(d, 'HH:mm') : '',
+      notes:         a.notes || '',
+    })
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    setShowForm(false)
+    setEditDoc(null)
+    setForm(EMPTY)
+  }
 
   async function handleSave(e) {
     e.preventDefault()
@@ -36,35 +68,60 @@ export default function Appointments() {
     try {
       const dateTime = new Date(`${form.date}T${form.time}`)
 
-      // Auto-create customer if not already in customers collection
-      const existing = await getDocs(
-        query(collection(db, 'customers'), where('phone', '==', form.customerPhone))
-      )
-      if (existing.empty) {
-        await addDoc(collection(db, 'customers'), {
-          name:         form.customerName,
-          phone:        form.customerPhone,
-          email:        '',
-          allergies:    '',
-          loyaltyPoints: 0,
-          totalVisits:  0,
-          createdAt:    serverTimestamp(),
+      if (editDoc) {
+        await updateDoc(doc(db, 'appointments', editDoc.id), {
+          ...form,
+          date: Timestamp.fromDate(dateTime),
+          updatedAt: serverTimestamp(),
         })
+        toast.success('Appointment updated')
+      } else {
+        // Auto-create customer if not exists
+        const existing = await getDocs(
+          query(collection(db, 'customers'), where('phone', '==', form.customerPhone))
+        )
+        if (existing.empty) {
+          await addDoc(collection(db, 'customers'), {
+            name: form.customerName, phone: form.customerPhone,
+            email: '', allergies: '', loyaltyPoints: 0, totalVisits: 0,
+            createdAt: serverTimestamp(),
+          })
+        }
+        await addDoc(collection(db, 'appointments'), {
+          ...form,
+          date: Timestamp.fromDate(dateTime),
+          status: 'scheduled',
+          createdAt: serverTimestamp(),
+        })
+        toast.success('Appointment booked')
       }
-
-      await addDoc(collection(db, 'appointments'), {
-        ...form,
-        date: Timestamp.fromDate(dateTime),
-        status: 'scheduled',
-        createdAt: serverTimestamp(),
-      })
-      toast.success('Appointment booked')
-      setForm(EMPTY)
-      setShowForm(false)
+      closeForm()
     } catch {
-      toast.error('Failed to book appointment')
+      toast.error('Failed to save appointment')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleStatusChange(a, status) {
+    try {
+      await updateDoc(doc(db, 'appointments', a.id), { status, updatedAt: serverTimestamp() })
+      toast.success('Status updated')
+    } catch {
+      toast.error('Failed to update status')
+    }
+  }
+
+  async function handleDelete(a) {
+    if (!window.confirm(`Delete appointment for ${a.customerName}?`)) return
+    setDeleting(a.id)
+    try {
+      await deleteDoc(doc(db, 'appointments', a.id))
+      toast.success('Appointment deleted')
+    } catch {
+      toast.error('Failed to delete')
+    } finally {
+      setDeleting(null)
     }
   }
 
@@ -73,32 +130,27 @@ export default function Appointments() {
       <PageHeader
         title="Appointments"
         subtitle={`${appointments.length} total`}
-        action={
-          <button className="btn-primary" onClick={() => setShowForm(true)}>
-            + Book appointment
-          </button>
-        }
+        action={<button className="btn-primary" onClick={openAdd}>+ Book appointment</button>}
       />
 
       {/* Filter tabs */}
       <div className="flex gap-2 mb-4">
         {['all', 'scheduled', 'completed', 'cancelled', 'no-show'].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
+          <button key={s} onClick={() => setFilter(s)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filter === s ? 'bg-brand-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
+            }`}>
             {s.charAt(0).toUpperCase() + s.slice(1)}
           </button>
         ))}
       </div>
 
-      {/* Add form */}
+      {/* Form */}
       {showForm && (
         <div className="card mb-6 border-brand-200">
-          <p className="text-sm font-medium text-gray-800 mb-4">Book appointment</p>
+          <p className="text-sm font-medium text-gray-800 mb-4">
+            {editDoc ? `Edit — ${editDoc.customerName}` : 'Book appointment'}
+          </p>
           <form onSubmit={handleSave} className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
@@ -115,7 +167,7 @@ export default function Appointments() {
               <select className="input" required value={form.service}
                 onChange={(e) => setForm({ ...form, service: e.target.value })}>
                 <option value="">Select service</option>
-                {SERVICES.map((s) => <option key={s}>{s}</option>)}
+                {serviceNames.map((s) => <option key={s}>{s}</option>)}
               </select>
             </div>
             <div>
@@ -142,9 +194,9 @@ export default function Appointments() {
                 onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
             <div className="col-span-2 flex gap-2 justify-end">
-              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="button" className="btn-secondary" onClick={closeForm}>Cancel</button>
               <button type="submit" className="btn-primary" disabled={saving}>
-                {saving ? 'Saving…' : 'Book appointment'}
+                {saving ? 'Saving…' : editDoc ? 'Update' : 'Book appointment'}
               </button>
             </div>
           </form>
@@ -152,21 +204,19 @@ export default function Appointments() {
       )}
 
       {/* Table */}
-      {loading ? (
-        <p className="text-sm text-gray-500">Loading…</p>
-      ) : (
+      {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
         <div className="card p-0 overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Customer', 'Phone', 'Service', 'Stylist', 'Date & time', 'Status'].map((h) => (
+                {['Customer', 'Phone', 'Service', 'Stylist', 'Date & time', 'Status', 'Actions'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400 text-sm">No appointments found</td></tr>
+                <tr><td colSpan={7} className="text-center py-8 text-gray-400 text-sm">No appointments found</td></tr>
               )}
               {filtered.map((a) => (
                 <tr key={a.id} className="hover:bg-gray-50">
@@ -178,7 +228,25 @@ export default function Appointments() {
                     {a.date?.toDate ? format(a.date.toDate(), 'dd MMM, h:mm a') : '—'}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={STATUS_BADGE[a.status] ?? 'badge-blue'}>{a.status}</span>
+                    <select
+                      value={a.status}
+                      onChange={(ev) => handleStatusChange(a, ev.target.value)}
+                      className="text-xs border border-gray-200 rounded px-1 py-0.5 bg-white"
+                    >
+                      {STATUSES.map((s) => <option key={s}>{s}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <button className="text-xs text-blue-600 hover:underline" onClick={() => openEdit(a)}>Edit</button>
+                      <button
+                        className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                        disabled={deleting === a.id}
+                        onClick={() => handleDelete(a)}
+                      >
+                        {deleting === a.id ? '…' : 'Delete'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -1,36 +1,36 @@
 import { useState } from 'react'
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore'
+import { collection, addDoc, deleteDoc, doc, serverTimestamp, updateDoc, increment, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
 import PageHeader from '../../components/PageHeader'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
-const SERVICES = [
-  { name: 'Haircut',    price: 300 },
-  { name: 'Hair colour',price: 1200 },
-  { name: 'Blowdry',   price: 400 },
-  { name: 'Facial',    price: 800 },
-  { name: 'Manicure',  price: 500 },
-  { name: 'Pedicure',  price: 600 },
-  { name: 'Threading', price: 100 },
-  { name: 'Waxing',    price: 700 },
-  { name: 'Massage',   price: 1500 },
-]
-
 const PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Wallet']
 
 export default function Billing() {
   const { docs: invoices, loading } = useCollection('invoices')
-  const { docs: customers } = useCollection('customers', 'name')
+  const { docs: customers }         = useCollection('customers', 'name')
+  const { docs: services }          = useCollection('services', 'name')
 
-  const [showForm, setShowForm]     = useState(false)
+  const SERVICE_LIST = services.length > 0
+    ? services.map((s) => ({ name: s.name, price: s.price ?? 0 }))
+    : [
+        { name: 'Haircut', price: 300 }, { name: 'Hair colour', price: 1200 },
+        { name: 'Blowdry', price: 400 }, { name: 'Facial', price: 800 },
+        { name: 'Manicure', price: 500 }, { name: 'Pedicure', price: 600 },
+        { name: 'Threading', price: 100 }, { name: 'Waxing', price: 700 },
+        { name: 'Massage', price: 1500 },
+      ]
+
+  const [showForm, setShowForm]         = useState(false)
   const [customerName, setCustomerName] = useState('')
-  const [customerId, setCustomerId] = useState('')
+  const [customerId, setCustomerId]     = useState('')
   const [selectedServices, setSelectedServices] = useState([])
-  const [discount, setDiscount]     = useState(0)
-  const [paymentMode, setPaymentMode] = useState('Cash')
-  const [saving, setSaving]         = useState(false)
+  const [discount, setDiscount]         = useState(0)
+  const [paymentMode, setPaymentMode]   = useState('Cash')
+  const [saving, setSaving]             = useState(false)
+  const [deleting, setDeleting]         = useState(null)
 
   const subtotal = selectedServices.reduce((s, i) => s + i.price, 0)
   const total    = Math.max(0, subtotal - Number(discount))
@@ -43,14 +43,40 @@ export default function Billing() {
     )
   }
 
+  function resetForm() {
+    setCustomerName('')
+    setCustomerId('')
+    setSelectedServices([])
+    setDiscount(0)
+    setPaymentMode('Cash')
+    setShowForm(false)
+  }
+
   async function handleSave(e) {
     e.preventDefault()
     if (!selectedServices.length) { toast.error('Select at least one service'); return }
     setSaving(true)
     try {
+      // Auto-create customer if walk-in (no customerId and name entered)
+      let linkedId = customerId
+      if (!linkedId && customerName) {
+        const existing = await getDocs(
+          query(collection(db, 'customers'), where('name', '==', customerName))
+        )
+        if (existing.empty) {
+          const newDoc = await addDoc(collection(db, 'customers'), {
+            name: customerName, phone: '', email: '', allergies: '',
+            loyaltyPoints: 0, totalVisits: 0, createdAt: serverTimestamp(),
+          })
+          linkedId = newDoc.id
+        } else {
+          linkedId = existing.docs[0].id
+        }
+      }
+
       await addDoc(collection(db, 'invoices'), {
         customerName,
-        customerId: customerId || null,
+        customerId: linkedId || null,
         services: selectedServices,
         subtotal,
         discount: Number(discount),
@@ -59,24 +85,33 @@ export default function Billing() {
         status: 'paid',
         createdAt: serverTimestamp(),
       })
-      // Update customer visit count and loyalty points if linked
-      if (customerId) {
-        await updateDoc(doc(db, 'customers', customerId), {
-          totalVisits: increment(1),
+
+      if (linkedId) {
+        await updateDoc(doc(db, 'customers', linkedId), {
+          totalVisits:   increment(1),
           loyaltyPoints: increment(Math.floor(total / 100)),
         })
       }
+
       toast.success('Invoice created')
-      setCustomerName('')
-      setCustomerId('')
-      setSelectedServices([])
-      setDiscount(0)
-      setPaymentMode('Cash')
-      setShowForm(false)
+      resetForm()
     } catch {
       toast.error('Failed to create invoice')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleDelete(inv) {
+    if (!window.confirm(`Delete invoice for ${inv.customerName}?`)) return
+    setDeleting(inv.id)
+    try {
+      await deleteDoc(doc(db, 'invoices', inv.id))
+      toast.success('Invoice deleted')
+    } catch {
+      toast.error('Failed to delete invoice')
+    } finally {
+      setDeleting(null)
     }
   }
 
@@ -92,14 +127,9 @@ export default function Billing() {
       <PageHeader
         title="Billing"
         subtitle={`Today's revenue: ₹${todayRevenue.toLocaleString()}`}
-        action={
-          <button className="btn-primary" onClick={() => setShowForm(true)}>
-            + New invoice
-          </button>
-        }
+        action={<button className="btn-primary" onClick={() => setShowForm(true)}>+ New invoice</button>}
       />
 
-      {/* Invoice form */}
       {showForm && (
         <div className="card mb-6 border-brand-200">
           <p className="text-sm font-medium text-gray-800 mb-4">New invoice</p>
@@ -111,14 +141,14 @@ export default function Billing() {
                   onChange={(e) => setCustomerName(e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Link to customer (optional)</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Link to existing customer</label>
                 <select className="input" value={customerId}
                   onChange={(e) => {
                     setCustomerId(e.target.value)
                     const c = customers.find((x) => x.id === e.target.value)
                     if (c) setCustomerName(c.name)
                   }}>
-                  <option value="">Walk-in / unlinked</option>
+                  <option value="">Walk-in / new</option>
                   {customers.map((c) => <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>)}
                 </select>
               </div>
@@ -127,19 +157,15 @@ export default function Billing() {
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-2">Services *</label>
               <div className="grid grid-cols-3 gap-2">
-                {SERVICES.map((svc) => {
+                {SERVICE_LIST.map((svc) => {
                   const selected = selectedServices.some((s) => s.name === svc.name)
                   return (
-                    <button
-                      key={svc.name}
-                      type="button"
-                      onClick={() => toggleService(svc)}
+                    <button key={svc.name} type="button" onClick={() => toggleService(svc)}
                       className={`text-left px-3 py-2 rounded-lg border text-xs transition-colors ${
                         selected
                           ? 'bg-brand-50 border-brand-400 text-brand-700 font-medium'
                           : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
+                      }`}>
                       <span className="block">{svc.name}</span>
                       <span className="text-gray-500">₹{svc.price}</span>
                     </button>
@@ -169,7 +195,7 @@ export default function Billing() {
             </div>
 
             <div className="flex gap-2 justify-end">
-              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
               <button type="submit" className="btn-primary" disabled={saving}>
                 {saving ? 'Creating…' : 'Create invoice'}
               </button>
@@ -178,22 +204,19 @@ export default function Billing() {
         </div>
       )}
 
-      {/* Invoices table */}
-      {loading ? (
-        <p className="text-sm text-gray-500">Loading…</p>
-      ) : (
+      {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
         <div className="card p-0 overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Customer', 'Services', 'Subtotal', 'Discount', 'Total', 'Payment', 'Date'].map((h) => (
+                {['Customer', 'Services', 'Subtotal', 'Discount', 'Total', 'Payment', 'Date', 'Actions'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {invoices.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400 text-sm">No invoices yet</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-gray-400 text-sm">No invoices yet</td></tr>
               )}
               {invoices.map((inv) => (
                 <tr key={inv.id} className="hover:bg-gray-50">
@@ -205,6 +228,15 @@ export default function Billing() {
                   <td className="px-4 py-3"><span className="badge-blue">{inv.paymentMode}</span></td>
                   <td className="px-4 py-3 text-gray-600 text-xs">
                     {inv.createdAt?.toDate ? format(inv.createdAt.toDate(), 'dd MMM, h:mm a') : '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                      disabled={deleting === inv.id}
+                      onClick={() => handleDelete(inv)}
+                    >
+                      {deleting === inv.id ? '…' : 'Delete'}
+                    </button>
                   </td>
                 </tr>
               ))}

@@ -11,6 +11,7 @@ const NAV = [
   { to: '/inventory',   label: 'Inventory',   icon: '📦' },
   { to: '/attendance',  label: 'Attendance',  icon: '🕐' },
   { to: '/staff',       label: 'Staff',       icon: '👥' },
+  { to: '/services',    label: 'Services',    icon: '✂' },
 ]
 
 export default function Layout({ children }) {

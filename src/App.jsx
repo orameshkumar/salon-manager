@@ -9,6 +9,7 @@ import Billing from './pages/billing/Billing'
 import Inventory from './pages/inventory/Inventory'
 import Attendance from './pages/attendance/Attendance'
 import Staff from './pages/staff/Staff'
+import Services from './pages/services/Services'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
@@ -27,6 +28,7 @@ function AppRoutes() {
       <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
       <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
       <Route path="/staff" element={<ProtectedRoute><Staff /></ProtectedRoute>} />
+      <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
