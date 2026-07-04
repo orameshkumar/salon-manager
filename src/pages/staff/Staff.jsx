@@ -18,7 +18,7 @@ export const ADMIN_ROLES = ['owner', 'manager']
 export const FLOOR_ROLES = ['stylist', 'beautician', 'nail technician', 'receptionist', 'trainee', 'helper']
 export const ALL_ROLES   = [...ADMIN_ROLES, ...FLOOR_ROLES]
 
-const EMPTY = { name: '', email: '', phone: '', role: 'stylist', password: '', services: [], stationId: '' }
+const EMPTY = { name: '', email: '', phone: '', roles: ['stylist'], password: '', services: [], stationId: '' }
 
 const ROLE_COLORS = {
   owner:            'bg-purple-100 text-purple-700',
@@ -63,7 +63,7 @@ export default function Staff() {
   const [deleting,  setDeleting]  = useState(null)
   const [search,    setSearch]    = useState('')
 
-  const isOwnerOrManager = ADMIN_ROLES.includes(profile?.role)
+  const isOwnerOrManager = (profile?.roles ?? []).some((r) => ADMIN_ROLES.includes(r))
 
   const filtered = staff.filter((s) =>
     s.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -81,11 +81,21 @@ export default function Staff() {
     setEditDoc(member)
     setForm({
       name: member.name, email: member.email, phone: member.phone,
-      role: member.role, password: '',
+      roles: member.roles?.length ? member.roles : (member.role ? [member.role] : ['stylist']),
+      password: '',
       services: member.services || [],
       stationId: member.stationId || '',
     })
     setShowForm(true)
+  }
+
+  function toggleRole(r) {
+    setForm((prev) => ({
+      ...prev,
+      roles: prev.roles.includes(r)
+        ? prev.roles.filter((x) => x !== r)
+        : [...prev.roles, r],
+    }))
   }
 
   function toggleService(name) {
@@ -107,13 +117,18 @@ export default function Staff() {
     e.preventDefault()
     setSaving(true)
     try {
+      if (form.roles.length === 0) {
+        toast.error('Select at least one role')
+        setSaving(false)
+        return
+      }
       if (editDoc) {
         // Update Firestore only (cannot change Firebase Auth email/password from client)
         const station = stations.find((s) => s.id === form.stationId)
         await updateDoc(doc(db, 'employees', editDoc.id), {
           name:        form.name,
           phone:       form.phone,
-          role:        form.role,
+          roles:       form.roles,
           services:    form.services,
           stationId:   form.stationId || null,
           stationName: station?.name || null,
@@ -133,7 +148,7 @@ export default function Staff() {
           name:        form.name,
           email:       form.email,
           phone:       form.phone,
-          role:        form.role,
+          roles:       form.roles,
           services:    form.services,
           stationId:   form.stationId || null,
           stationName: station?.name || null,
@@ -181,7 +196,11 @@ export default function Staff() {
 
   const activeCount = staff.filter((s) => s.active !== false).length
   const byRole      = ALL_ROLES.reduce((acc, r) => {
-    acc[r] = staff.filter((s) => s.role === r).length
+    // count staff whose roles array includes r (or legacy role string equals r)
+    acc[r] = staff.filter((s) => {
+      const roles = s.roles?.length ? s.roles : (s.role ? [s.role] : [])
+      return roles.includes(r)
+    }).length
     return acc
   }, {})
 
@@ -258,24 +277,30 @@ export default function Staff() {
                 <p className="text-xs text-gray-400 mt-1">Email cannot be changed after creation</p>
               )}
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Role *</label>
-              <select
-                className="input"
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-              >
-                <optgroup label="Admin">
-                  {ADMIN_ROLES.map((r) => (
-                    <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                  ))}
-                </optgroup>
-                <optgroup label="Floor staff">
-                  {FLOOR_ROLES.map((r) => (
-                    <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                  ))}
-                </optgroup>
-              </select>
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Roles * <span className="text-gray-400 font-normal">({form.roles.length} selected — select all that apply)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <p className="w-full text-xs text-gray-400 mb-1">Admin</p>
+                {ADMIN_ROLES.map((r) => (
+                  <button key={r} type="button" onClick={() => toggleRole(r)}
+                    className={`px-3 py-1 rounded-full text-xs border transition-colors capitalize ${
+                      form.roles.includes(r)
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-white text-gray-600 border-gray-300 hover:border-purple-400'
+                    }`}>{r}</button>
+                ))}
+                <p className="w-full text-xs text-gray-400 mt-2 mb-1">Floor staff</p>
+                {FLOOR_ROLES.map((r) => (
+                  <button key={r} type="button" onClick={() => toggleRole(r)}
+                    className={`px-3 py-1 rounded-full text-xs border transition-colors capitalize ${
+                      form.roles.includes(r)
+                        ? 'bg-brand-600 text-white border-brand-600'
+                        : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400'
+                    }`}>{r}</button>
+                ))}
+              </div>
             </div>
             {!editDoc && (
               <div className="col-span-2">
@@ -364,9 +389,13 @@ export default function Staff() {
                   <td className="px-4 py-3 text-gray-600">{member.email}</td>
                   <td className="px-4 py-3 text-gray-600">{member.phone || '—'}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${ROLE_COLORS[member.role] ?? ROLE_COLORS.staff}`}>
-                      {member.role}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {(member.roles?.length ? member.roles : (member.role ? [member.role] : [])).map((r) => (
+                        <span key={r} className={`text-xs font-medium px-2 py-1 rounded-full capitalize ${ROLE_COLORS[r] ?? 'bg-gray-100 text-gray-600'}`}>
+                          {r}
+                        </span>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{member.stationName || '—'}</td>
                   <td className="px-4 py-3">

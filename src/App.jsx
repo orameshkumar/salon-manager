@@ -23,7 +23,7 @@ function ProtectedRoute({ children }) {
 function ManagerRoute({ children }) {
   const { user, profile } = useAuth()
   if (!user) return <Navigate to="/login" replace />
-  if (!ADMIN_ROLES.includes(profile?.role)) return <Navigate to="/" replace />
+  if (!(profile?.roles ?? []).some((r) => ADMIN_ROLES.includes(r))) return <Navigate to="/" replace />
   return <Layout>{children}</Layout>
 }
 

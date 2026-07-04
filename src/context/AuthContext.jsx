@@ -23,7 +23,16 @@ export function AuthProvider({ children }) {
         unsubProfile = onSnapshot(
           doc(db, 'employees', firebaseUser.uid),
           (snap) => {
-            setProfile(snap.exists() ? snap.data() : null)
+            if (snap.exists()) {
+              const data = snap.data()
+              // Normalise: support both legacy `role` (string) and new `roles` (array)
+              const roles = data.roles?.length ? data.roles
+                : data.role ? [data.role]
+                : []
+              setProfile({ ...data, roles })
+            } else {
+              setProfile(null)
+            }
             setLoading(false)
           },
           () => {

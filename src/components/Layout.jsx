@@ -38,7 +38,9 @@ export default function Layout({ children }) {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {NAV.filter(({ roles }) => !roles || roles.includes(profile?.role)).map(({ to, label, icon }) => (
+          {NAV.filter(({ roles: allowedRoles }) =>
+            !allowedRoles || (profile?.roles ?? []).some((r) => allowedRoles.includes(r))
+          ).map(({ to, label, icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -60,7 +62,9 @@ export default function Layout({ children }) {
         <div className="px-3 py-4 border-t border-gray-200">
           <div className="px-3 py-2 mb-1">
             <p className="text-xs font-medium text-gray-800 truncate">{profile?.name ?? 'Staff'}</p>
-            <p className="text-xs text-gray-500 capitalize">{profile?.role ?? 'receptionist'}</p>
+            <p className="text-xs text-gray-500 capitalize">
+              {(profile?.roles ?? []).join(', ') || 'staff'}
+            </p>
           </div>
           <button
             onClick={handleSignOut}
