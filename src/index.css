@@ -11,12 +11,12 @@
   --brand-600: #db2777;
   --brand-700: #be185d;
 
-  --bg-page:    #f9fafb;
+  --bg-page:    #fdf2f8;
   --bg-surface: #ffffff;
-  --bg-sidebar: #ffffff;
-  --bg-hover:   #f3f4f6;
-  --bg-thead:   #f9fafb;
-  --border:     #e5e7eb;
+  --bg-sidebar: #fce7f3;
+  --bg-hover:   #fce7f3;
+  --bg-thead:   #fdf2f8;
+  --border:     #f9a8d4;
   --text-1:     #111827;
   --text-2:     #374151;
   --text-3:     #6b7280;
@@ -34,6 +34,13 @@
   --brand-500: #3b82f6;
   --brand-600: #2563eb;
   --brand-700: #1d4ed8;
+
+  --bg-page:    #eff6ff;
+  --bg-surface: #ffffff;
+  --bg-sidebar: #dbeafe;
+  --bg-hover:   #dbeafe;
+  --bg-thead:   #eff6ff;
+  --border:     #93c5fd;
 }
 
 /* ── Theme: Forest ─────────────────────────────────────────────────────────── */
@@ -44,6 +51,13 @@
   --brand-500: #22c55e;
   --brand-600: #16a34a;
   --brand-700: #15803d;
+
+  --bg-page:    #f0fdf4;
+  --bg-surface: #ffffff;
+  --bg-sidebar: #dcfce7;
+  --bg-hover:   #dcfce7;
+  --bg-thead:   #f0fdf4;
+  --border:     #86efac;
 }
 
 /* ── Theme: Violet ─────────────────────────────────────────────────────────── */
@@ -54,6 +68,13 @@
   --brand-500: #8b5cf6;
   --brand-600: #7c3aed;
   --brand-700: #6d28d9;
+
+  --bg-page:    #f5f3ff;
+  --bg-surface: #ffffff;
+  --bg-sidebar: #ede9fe;
+  --bg-hover:   #ede9fe;
+  --bg-thead:   #f5f3ff;
+  --border:     #c4b5fd;
 }
 
 /* ── Theme: Midnight (dark) ────────────────────────────────────────────────── */
@@ -110,7 +131,6 @@ body {
     border: 1px solid var(--input-border);
     --tw-ring-color: var(--brand-500);
   }
-  /* Fix native select/option text in all themes */
   select.input option {
     background-color: var(--input-bg);
     color: var(--input-text);
@@ -128,30 +148,69 @@ body {
   .badge-blue   { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800; }
 }
 
-/* ── Dark theme structural overrides ──────────────────────────────────────── */
-[data-theme="midnight"] body,
-[data-theme="midnight"] #root,
-[data-theme="midnight"] .flex.h-screen {
-  background-color: var(--bg-page);
-}
+/* ── Structural overrides for ALL themes (hardcoded Tailwind bg classes) ───── */
+
+/* Page / layout root */
+:root .flex.h-screen,
+[data-theme="ocean"]    .flex.h-screen,
+[data-theme="forest"]   .flex.h-screen,
+[data-theme="violet"]   .flex.h-screen,
+[data-theme="midnight"] .flex.h-screen { background-color: var(--bg-page) !important; }
 
 /* Sidebar */
+:root aside,
+[data-theme="ocean"]    aside,
+[data-theme="forest"]   aside,
+[data-theme="violet"]   aside,
 [data-theme="midnight"] aside {
   background-color: var(--bg-sidebar) !important;
   border-color: var(--border) !important;
 }
 
-/* Cards / surfaces */
-[data-theme="midnight"] .bg-white   { background-color: var(--bg-surface) !important; }
+/* Mobile top bar */
+:root header,
+[data-theme="ocean"]    header,
+[data-theme="forest"]   header,
+[data-theme="violet"]   header,
+[data-theme="midnight"] header {
+  background-color: var(--bg-sidebar) !important;
+  border-color: var(--border) !important;
+}
+
+/* Table header rows */
+:root .bg-gray-50,
+[data-theme="ocean"]    .bg-gray-50,
+[data-theme="forest"]   .bg-gray-50,
+[data-theme="violet"]   .bg-gray-50,
 [data-theme="midnight"] .bg-gray-50 { background-color: var(--bg-thead) !important; }
+
+/* Hover rows */
+:root .hover\:bg-gray-50:hover,
+[data-theme="ocean"]    .hover\:bg-gray-50:hover,
+[data-theme="forest"]   .hover\:bg-gray-50:hover,
+[data-theme="violet"]   .hover\:bg-gray-50:hover,
+[data-theme="midnight"] .hover\:bg-gray-50:hover { background-color: var(--bg-hover) !important; }
+
+:root .hover\:bg-gray-100:hover,
+[data-theme="ocean"]    .hover\:bg-gray-100:hover,
+[data-theme="forest"]   .hover\:bg-gray-100:hover,
+[data-theme="violet"]   .hover\:bg-gray-100:hover,
+[data-theme="midnight"] .hover\:bg-gray-100:hover { background-color: var(--bg-hover) !important; }
+
+/* Dividers */
+:root .border-gray-200,
+[data-theme="ocean"]    .border-gray-200,
+[data-theme="forest"]   .border-gray-200,
+[data-theme="violet"]   .border-gray-200,
+[data-theme="midnight"] .border-gray-200 { border-color: var(--border) !important; }
+
+/* ── Midnight-only: bg-white, text, inputs, divide ─────────────────────────── */
+[data-theme="midnight"] .bg-white    { background-color: var(--bg-surface) !important; }
 [data-theme="midnight"] .bg-gray-100 { background-color: var(--bg-hover) !important; }
 
-/* Borders */
-[data-theme="midnight"] .border-gray-200 { border-color: var(--border) !important; }
 [data-theme="midnight"] .border-gray-300 { border-color: var(--input-border) !important; }
 [data-theme="midnight"] .divide-gray-100 > * + * { border-color: var(--border) !important; }
 
-/* Text */
 [data-theme="midnight"] .text-gray-900,
 [data-theme="midnight"] .text-gray-800 { color: var(--text-1) !important; }
 [data-theme="midnight"] .text-gray-700,
@@ -159,7 +218,6 @@ body {
 [data-theme="midnight"] .text-gray-500 { color: var(--text-3) !important; }
 [data-theme="midnight"] .text-gray-400 { color: var(--text-4) !important; }
 
-/* Inputs / selects */
 [data-theme="midnight"] input:not([type="checkbox"]):not([type="radio"]),
 [data-theme="midnight"] select,
 [data-theme="midnight"] textarea {
@@ -172,20 +230,6 @@ body {
   color: var(--input-text);
 }
 
-/* Nav hover / active */
-[data-theme="midnight"] .hover\:bg-gray-100:hover { background-color: var(--bg-hover) !important; }
-[data-theme="midnight"] .hover\:bg-gray-50:hover  { background-color: var(--bg-hover) !important; }
-
-/* Table rows */
-[data-theme="midnight"] .hover\:bg-gray-50:hover { background-color: var(--bg-hover) !important; }
 [data-theme="midnight"] thead { background-color: var(--bg-thead) !important; }
-
-/* Mobile top bar */
-[data-theme="midnight"] header.md\:hidden {
-  background-color: var(--bg-sidebar) !important;
-  border-color: var(--border) !important;
-}
-
-/* Amber/brand tinted surfaces */
-[data-theme="midnight"] .bg-brand-50 { background-color: var(--brand-50) !important; }
+[data-theme="midnight"] .bg-brand-50  { background-color: var(--brand-50)  !important; }
 [data-theme="midnight"] .bg-brand-100 { background-color: var(--brand-100) !important; }
