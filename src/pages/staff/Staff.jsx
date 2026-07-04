@@ -18,7 +18,7 @@ export const ADMIN_ROLES = ['owner', 'manager']
 export const FLOOR_ROLES = ['stylist', 'beautician', 'nail technician', 'receptionist', 'trainee', 'helper']
 export const ALL_ROLES   = [...ADMIN_ROLES, ...FLOOR_ROLES]
 
-const EMPTY = { name: '', email: '', phone: '', roles: ['stylist'], password: '', services: [], stationId: '' }
+const EMPTY = { name: '', email: '', phone: '', roles: ['stylist'], password: '', services: [] }
 
 const ROLE_COLORS = {
   owner:            'bg-purple-100 text-purple-700',
@@ -52,9 +52,8 @@ async function createAuthUser(email, password) {
 
 export default function Staff() {
   const { profile } = useAuth()
-  const { docs: staff, loading }   = useCollection('employees', 'name')
-  const { docs: serviceList }      = useCollection('services', 'name')
-  const { docs: stations }         = useCollection('stations', 'name')
+  const { docs: staff, loading } = useCollection('employees', 'name')
+  const { docs: serviceList }    = useCollection('services', 'name')
 
   const [showForm,  setShowForm]  = useState(false)
   const [editDoc,   setEditDoc]   = useState(null)   // {id, ...fields} when editing
@@ -84,7 +83,6 @@ export default function Staff() {
       roles: member.roles?.length ? member.roles : (member.role ? [member.role] : ['stylist']),
       password: '',
       services: member.services || [],
-      stationId: member.stationId || '',
     })
     setShowForm(true)
   }
@@ -124,15 +122,12 @@ export default function Staff() {
       }
       if (editDoc) {
         // Update Firestore only (cannot change Firebase Auth email/password from client)
-        const station = stations.find((s) => s.id === form.stationId)
         await updateDoc(doc(db, 'employees', editDoc.id), {
-          name:        form.name,
-          phone:       form.phone,
-          roles:       form.roles,
-          services:    form.services,
-          stationId:   form.stationId || null,
-          stationName: station?.name || null,
-          updatedAt:   serverTimestamp(),
+          name:      form.name,
+          phone:     form.phone,
+          roles:     form.roles,
+          services:  form.services,
+          updatedAt: serverTimestamp(),
         })
         toast.success('Staff member updated')
       } else {
@@ -143,17 +138,14 @@ export default function Staff() {
           return
         }
         const uid = await createAuthUser(form.email, form.password)
-        const station = stations.find((s) => s.id === form.stationId)
         await setDoc(doc(db, 'employees', uid), {
-          name:        form.name,
-          email:       form.email,
-          phone:       form.phone,
-          roles:       form.roles,
-          services:    form.services,
-          stationId:   form.stationId || null,
-          stationName: station?.name || null,
-          active:      true,
-          createdAt:   serverTimestamp(),
+          name:      form.name,
+          email:     form.email,
+          phone:     form.phone,
+          roles:     form.roles,
+          services:  form.services,
+          active:    true,
+          createdAt: serverTimestamp(),
         })
         toast.success(`${form.name} added successfully`)
       }
@@ -315,18 +307,6 @@ export default function Staff() {
               </div>
             )}
 
-            {/* Station assignment */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Assigned station</label>
-              <select className="input" value={form.stationId}
-                onChange={(e) => setForm({ ...form, stationId: e.target.value })}>
-                <option value="">No station</option>
-                {stations.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
-
             {/* Services multi-select */}
             {serviceList.length > 0 && (
               <div className="col-span-2">
@@ -370,7 +350,7 @@ export default function Staff() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Name', 'Email', 'Phone', 'Role', 'Station', 'Services', 'Status', 'Actions'].map((h) => (
+                {['Name', 'Email', 'Phone', 'Role', 'Services', 'Status', 'Actions'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
@@ -378,7 +358,7 @@ export default function Staff() {
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-gray-400 text-sm">
+                  <td colSpan={7} className="text-center py-8 text-gray-400 text-sm">
                     No staff members found
                   </td>
                 </tr>
@@ -397,7 +377,6 @@ export default function Staff() {
                       ))}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">{member.stationName || '—'}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {(member.services || []).length === 0
