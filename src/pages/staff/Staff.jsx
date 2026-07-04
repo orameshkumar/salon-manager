@@ -2,9 +2,10 @@ import { useState } from 'react'
 import {
   doc, setDoc, updateDoc, deleteDoc, serverTimestamp,
 } from 'firebase/firestore'
+import { initializeApp } from 'firebase/app'
 import {
-  createUserWithEmailAndPassword, deleteUser,
-  getAuth, initializeApp,
+  createUserWithEmailAndPassword,
+  getAuth,
 } from 'firebase/auth'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
