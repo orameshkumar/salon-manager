@@ -13,13 +13,22 @@ import { useAuth } from '../../context/AuthContext'
 import PageHeader from '../../components/PageHeader'
 import toast from 'react-hot-toast'
 
-const ROLES   = ['owner', 'manager', 'staff']
-const EMPTY   = { name: '', email: '', phone: '', role: 'staff', password: '', services: [], stationId: '' }
+// Admin roles have full access; floor roles are staff-level
+export const ADMIN_ROLES = ['owner', 'manager']
+export const FLOOR_ROLES = ['stylist', 'beautician', 'nail technician', 'receptionist', 'trainee', 'helper']
+export const ALL_ROLES   = [...ADMIN_ROLES, ...FLOOR_ROLES]
+
+const EMPTY = { name: '', email: '', phone: '', role: 'stylist', password: '', services: [], stationId: '' }
 
 const ROLE_COLORS = {
-  owner:   'bg-purple-100 text-purple-700',
-  manager: 'bg-blue-100 text-blue-700',
-  staff:   'bg-gray-100 text-gray-700',
+  owner:            'bg-purple-100 text-purple-700',
+  manager:          'bg-blue-100   text-blue-700',
+  stylist:          'bg-brand-100  text-brand-700',
+  beautician:       'bg-pink-100   text-pink-700',
+  'nail technician':'bg-rose-100   text-rose-700',
+  receptionist:     'bg-teal-100   text-teal-700',
+  trainee:          'bg-yellow-100 text-yellow-700',
+  helper:           'bg-gray-100   text-gray-600',
 }
 
 // Creates a Firebase Auth user without signing out the current admin
@@ -54,7 +63,7 @@ export default function Staff() {
   const [deleting,  setDeleting]  = useState(null)
   const [search,    setSearch]    = useState('')
 
-  const isOwnerOrManager = ['owner', 'manager'].includes(profile?.role)
+  const isOwnerOrManager = ADMIN_ROLES.includes(profile?.role)
 
   const filtered = staff.filter((s) =>
     s.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -170,10 +179,11 @@ export default function Staff() {
     }
   }
 
-  const activeCount   = staff.filter((s) => s.active !== false).length
-  const ownerCount    = staff.filter((s) => s.role === 'owner').length
-  const managerCount  = staff.filter((s) => s.role === 'manager').length
-  const staffCount    = staff.filter((s) => s.role === 'staff').length
+  const activeCount = staff.filter((s) => s.active !== false).length
+  const byRole      = ALL_ROLES.reduce((acc, r) => {
+    acc[r] = staff.filter((s) => s.role === r).length
+    return acc
+  }, {})
 
   return (
     <div className="p-6">
@@ -190,23 +200,17 @@ export default function Staff() {
       />
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="card text-center">
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="card text-center py-2 px-4 min-w-[80px]">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total</p>
           <p className="text-2xl font-semibold text-brand-700">{staff.length}</p>
         </div>
-        <div className="card text-center">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Owners</p>
-          <p className="text-2xl font-semibold text-purple-600">{ownerCount}</p>
-        </div>
-        <div className="card text-center">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Managers</p>
-          <p className="text-2xl font-semibold text-blue-600">{managerCount}</p>
-        </div>
-        <div className="card text-center">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Staff</p>
-          <p className="text-2xl font-semibold text-gray-600">{staffCount}</p>
-        </div>
+        {ALL_ROLES.filter((r) => byRole[r] > 0).map((r) => (
+          <div key={r} className="card text-center py-2 px-4 min-w-[80px]">
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1 capitalize">{r}</p>
+            <p className={`text-2xl font-semibold ${ROLE_COLORS[r]?.split(' ')[1] ?? 'text-gray-600'}`}>{byRole[r]}</p>
+          </div>
+        ))}
       </div>
 
       {/* Search */}
@@ -261,9 +265,16 @@ export default function Staff() {
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
               >
-                {ROLES.map((r) => (
-                  <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                ))}
+                <optgroup label="Admin">
+                  {ADMIN_ROLES.map((r) => (
+                    <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Floor staff">
+                  {FLOOR_ROLES.map((r) => (
+                    <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                  ))}
+                </optgroup>
               </select>
             </div>
             {!editDoc && (

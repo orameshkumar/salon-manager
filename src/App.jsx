@@ -8,7 +8,7 @@ import Appointments from './pages/appointments/Appointments'
 import Billing from './pages/billing/Billing'
 import Inventory from './pages/inventory/Inventory'
 import Attendance from './pages/attendance/Attendance'
-import Staff from './pages/staff/Staff'
+import Staff, { ADMIN_ROLES } from './pages/staff/Staff'
 import Services from './pages/services/Services'
 import Settings from './pages/settings/Settings'
 import Reports from './pages/reports/Reports'
@@ -23,7 +23,7 @@ function ProtectedRoute({ children }) {
 function ManagerRoute({ children }) {
   const { user, profile } = useAuth()
   if (!user) return <Navigate to="/login" replace />
-  if (!['owner', 'manager'].includes(profile?.role)) return <Navigate to="/" replace />
+  if (!ADMIN_ROLES.includes(profile?.role)) return <Navigate to="/" replace />
   return <Layout>{children}</Layout>
 }
 

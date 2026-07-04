@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { ADMIN_ROLES } from '../pages/staff/Staff'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
@@ -11,11 +12,11 @@ const NAV = [
   { to: '/billing',      label: 'Billing',      icon: '🧾' },
   { to: '/inventory',    label: 'Inventory',    icon: '📦' },
   { to: '/attendance',   label: 'Attendance',   icon: '🕐' },
-  { to: '/staff',        label: 'Staff',        icon: '👥',  roles: ['owner', 'manager'] },
-  { to: '/stations',     label: 'Stations',     icon: '💺',  roles: ['owner', 'manager'] },
-  { to: '/services',     label: 'Services',     icon: '✂',   roles: ['owner', 'manager'] },
-  { to: '/reports',      label: 'Reports',      icon: '📊',  roles: ['owner', 'manager'] },
-  { to: '/settings',     label: 'Settings',     icon: '⚙',   roles: ['owner', 'manager'] },
+  { to: '/staff',        label: 'Staff',        icon: '👥',  roles: ADMIN_ROLES },
+  { to: '/stations',     label: 'Stations',     icon: '💺',  roles: ADMIN_ROLES },
+  { to: '/services',     label: 'Services',     icon: '✂',   roles: ADMIN_ROLES },
+  { to: '/reports',      label: 'Reports',      icon: '📊',  roles: ADMIN_ROLES },
+  { to: '/settings',     label: 'Settings',     icon: '⚙',   roles: ADMIN_ROLES },
 ]
 
 export default function Layout({ children }) {

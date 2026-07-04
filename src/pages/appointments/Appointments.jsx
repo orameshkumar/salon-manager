@@ -30,7 +30,7 @@ export default function Appointments() {
   const [filter, setFilter]     = useState('all')
 
   // Filter staff by selected service; show all active staff if no service chosen or staff has no services list
-  const allStaff = employees.filter((e) => e.active !== false && ['stylist', 'staff', 'manager', 'owner'].includes(e.role))
+  const allStaff = employees.filter((e) => e.active !== false)
   const stylists = form.service
     ? allStaff.filter((e) => !e.services?.length || e.services.includes(form.service))
     : allStaff
