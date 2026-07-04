@@ -14,7 +14,7 @@ import PageHeader from '../../components/PageHeader'
 import toast from 'react-hot-toast'
 
 const ROLES   = ['owner', 'manager', 'staff']
-const EMPTY   = { name: '', email: '', phone: '', role: 'staff', password: '' }
+const EMPTY   = { name: '', email: '', phone: '', role: 'staff', password: '', services: [], stationId: '' }
 
 const ROLE_COLORS = {
   owner:   'bg-purple-100 text-purple-700',
@@ -43,7 +43,9 @@ async function createAuthUser(email, password) {
 
 export default function Staff() {
   const { profile } = useAuth()
-  const { docs: staff, loading } = useCollection('employees', 'name')
+  const { docs: staff, loading }   = useCollection('employees', 'name')
+  const { docs: serviceList }      = useCollection('services', 'name')
+  const { docs: stations }         = useCollection('stations', 'name')
 
   const [showForm,  setShowForm]  = useState(false)
   const [editDoc,   setEditDoc]   = useState(null)   // {id, ...fields} when editing
@@ -68,8 +70,22 @@ export default function Staff() {
 
   function openEdit(member) {
     setEditDoc(member)
-    setForm({ name: member.name, email: member.email, phone: member.phone, role: member.role, password: '' })
+    setForm({
+      name: member.name, email: member.email, phone: member.phone,
+      role: member.role, password: '',
+      services: member.services || [],
+      stationId: member.stationId || '',
+    })
     setShowForm(true)
+  }
+
+  function toggleService(name) {
+    setForm((prev) => ({
+      ...prev,
+      services: prev.services.includes(name)
+        ? prev.services.filter((s) => s !== name)
+        : [...prev.services, name],
+    }))
   }
 
   function closeForm() {
@@ -84,11 +100,15 @@ export default function Staff() {
     try {
       if (editDoc) {
         // Update Firestore only (cannot change Firebase Auth email/password from client)
+        const station = stations.find((s) => s.id === form.stationId)
         await updateDoc(doc(db, 'employees', editDoc.id), {
-          name:      form.name,
-          phone:     form.phone,
-          role:      form.role,
-          updatedAt: serverTimestamp(),
+          name:        form.name,
+          phone:       form.phone,
+          role:        form.role,
+          services:    form.services,
+          stationId:   form.stationId || null,
+          stationName: station?.name || null,
+          updatedAt:   serverTimestamp(),
         })
         toast.success('Staff member updated')
       } else {
@@ -99,13 +119,17 @@ export default function Staff() {
           return
         }
         const uid = await createAuthUser(form.email, form.password)
+        const station = stations.find((s) => s.id === form.stationId)
         await setDoc(doc(db, 'employees', uid), {
-          name:      form.name,
-          email:     form.email,
-          phone:     form.phone,
-          role:      form.role,
-          active:    true,
-          createdAt: serverTimestamp(),
+          name:        form.name,
+          email:       form.email,
+          phone:       form.phone,
+          role:        form.role,
+          services:    form.services,
+          stationId:   form.stationId || null,
+          stationName: station?.name || null,
+          active:      true,
+          createdAt:   serverTimestamp(),
         })
         toast.success(`${form.name} added successfully`)
       }
@@ -254,6 +278,44 @@ export default function Staff() {
                 />
               </div>
             )}
+
+            {/* Station assignment */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Assigned station</label>
+              <select className="input" value={form.stationId}
+                onChange={(e) => setForm({ ...form, stationId: e.target.value })}>
+                <option value="">No station</option>
+                {stations.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Services multi-select */}
+            {serviceList.length > 0 && (
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Services this staff can perform
+                  <span className="text-gray-400 font-normal ml-1">({form.services.length} selected)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {serviceList.map((svc) => {
+                    const selected = form.services.includes(svc.name)
+                    return (
+                      <button key={svc.id} type="button" onClick={() => toggleService(svc.name)}
+                        className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                          selected
+                            ? 'bg-brand-600 text-white border-brand-600'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400'
+                        }`}>
+                        {svc.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="col-span-2 flex gap-2 justify-end">
               <button type="button" className="btn-secondary" onClick={closeForm}>Cancel</button>
               <button type="submit" className="btn-primary" disabled={saving}>
@@ -272,7 +334,7 @@ export default function Staff() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Name', 'Email', 'Phone', 'Role', 'Status', 'Actions'].map((h) => (
+                {['Name', 'Email', 'Phone', 'Role', 'Station', 'Services', 'Status', 'Actions'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
@@ -280,7 +342,7 @@ export default function Staff() {
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400 text-sm">
+                  <td colSpan={8} className="text-center py-8 text-gray-400 text-sm">
                     No staff members found
                   </td>
                 </tr>
@@ -294,6 +356,16 @@ export default function Staff() {
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${ROLE_COLORS[member.role] ?? ROLE_COLORS.staff}`}>
                       {member.role}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 text-xs">{member.stationName || '—'}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {(member.services || []).length === 0
+                        ? <span className="text-xs text-gray-400">—</span>
+                        : (member.services || []).map((s) => (
+                            <span key={s} className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-xs rounded">{s}</span>
+                          ))}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     {member.active === false ? (

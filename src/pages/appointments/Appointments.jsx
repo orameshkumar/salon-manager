@@ -14,12 +14,13 @@ const STATUS_BADGE = {
 }
 
 const STATUSES  = ['scheduled', 'completed', 'cancelled', 'no-show']
-const EMPTY     = { customerName: '', customerPhone: '', service: '', stylist: '', date: '', time: '', notes: '' }
+const EMPTY     = { customerName: '', customerPhone: '', service: '', stylist: '', stationId: '', date: '', time: '', notes: '' }
 
 export default function Appointments() {
   const { docs: appointments, loading } = useCollection('appointments', 'date')
   const { docs: employees }             = useCollection('employees', 'name')
   const { docs: services }              = useCollection('services', 'name')
+  const { docs: stations }              = useCollection('stations', 'name')
 
   const [showForm, setShowForm] = useState(false)
   const [editDoc, setEditDoc]   = useState(null)
@@ -28,7 +29,11 @@ export default function Appointments() {
   const [deleting, setDeleting] = useState(null)
   const [filter, setFilter]     = useState('all')
 
-  const stylists     = employees.filter((e) => ['stylist', 'staff', 'manager', 'owner'].includes(e.role))
+  // Filter staff by selected service; show all active staff if no service chosen or staff has no services list
+  const allStaff = employees.filter((e) => e.active !== false && ['stylist', 'staff', 'manager', 'owner'].includes(e.role))
+  const stylists = form.service
+    ? allStaff.filter((e) => !e.services?.length || e.services.includes(form.service))
+    : allStaff
   const serviceNames = services.length > 0
     ? services.map((s) => s.name)
     : ['Haircut', 'Hair colour', 'Blowdry', 'Facial', 'Manicure', 'Pedicure', 'Threading', 'Waxing', 'Massage']
@@ -49,6 +54,7 @@ export default function Appointments() {
       customerPhone: a.customerPhone,
       service:       a.service,
       stylist:       a.stylist || '',
+      stationId:     a.stationId || '',
       date:          d ? format(d, 'yyyy-MM-dd') : '',
       time:          d ? format(d, 'HH:mm') : '',
       notes:         a.notes || '',
@@ -68,12 +74,14 @@ export default function Appointments() {
     try {
       const dateTime = new Date(`${form.date}T${form.time}`)
 
+      const station = stations.find((s) => s.id === form.stationId)
+      const apptData = {
+        ...form,
+        stationName: station?.name || null,
+        date: Timestamp.fromDate(dateTime),
+      }
       if (editDoc) {
-        await updateDoc(doc(db, 'appointments', editDoc.id), {
-          ...form,
-          date: Timestamp.fromDate(dateTime),
-          updatedAt: serverTimestamp(),
-        })
+        await updateDoc(doc(db, 'appointments', editDoc.id), { ...apptData, updatedAt: serverTimestamp() })
         toast.success('Appointment updated')
       } else {
         // Auto-create customer if not exists (check by phone, fallback to name)
@@ -107,8 +115,7 @@ export default function Appointments() {
         }
 
         await addDoc(collection(db, 'appointments'), {
-          ...form,
-          date: Timestamp.fromDate(dateTime),
+          ...apptData,
           status: 'scheduled',
           createdAt: serverTimestamp(),
         })
@@ -184,17 +191,34 @@ export default function Appointments() {
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Service *</label>
               <select className="input" required value={form.service}
-                onChange={(e) => setForm({ ...form, service: e.target.value })}>
+                onChange={(e) => setForm({ ...form, service: e.target.value, stylist: '' })}>
                 <option value="">Select service</option>
                 {serviceNames.map((s) => <option key={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Stylist</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Stylist
+                {form.service && stylists.length < allStaff.length && (
+                  <span className="text-gray-400 font-normal ml-1">(filtered by service)</span>
+                )}
+              </label>
               <select className="input" value={form.stylist}
                 onChange={(e) => setForm({ ...form, stylist: e.target.value })}>
                 <option value="">Any available</option>
                 {stylists.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Station</label>
+              <select className="input" value={form.stationId}
+                onChange={(e) => setForm({ ...form, stationId: e.target.value })}>
+                <option value="">No station</option>
+                {stations.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}{s.assignedStaffName ? ` — ${s.assignedStaffName}` : ''}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -228,14 +252,14 @@ export default function Appointments() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Customer', 'Phone', 'Service', 'Stylist', 'Date & time', 'Status', 'Actions'].map((h) => (
+                {['Customer', 'Phone', 'Service', 'Stylist', 'Station', 'Date & time', 'Status', 'Actions'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400 text-sm">No appointments found</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-gray-400 text-sm">No appointments found</td></tr>
               )}
               {filtered.map((a) => (
                 <tr key={a.id} className="hover:bg-gray-50">
@@ -243,6 +267,7 @@ export default function Appointments() {
                   <td className="px-4 py-3 text-gray-600">{a.customerPhone}</td>
                   <td className="px-4 py-3 text-gray-600">{a.service}</td>
                   <td className="px-4 py-3 text-gray-600">{a.stylist || '—'}</td>
+                  <td className="px-4 py-3 text-gray-600">{a.stationName || '—'}</td>
                   <td className="px-4 py-3 text-gray-600">
                     {a.date?.toDate ? format(a.date.toDate(), 'dd MMM, h:mm a') : '—'}
                   </td>

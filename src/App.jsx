@@ -12,6 +12,7 @@ import Staff from './pages/staff/Staff'
 import Services from './pages/services/Services'
 import Settings from './pages/settings/Settings'
 import Reports from './pages/reports/Reports'
+import Stations from './pages/stations/Stations'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
@@ -33,6 +34,7 @@ function AppRoutes() {
       <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+      <Route path="/stations" element={<ProtectedRoute><Stations /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
