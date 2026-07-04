@@ -31,15 +31,25 @@ export default function Services() {
   const [seeding, setSeeding]   = useState(false)
 
   async function loadDefaults() {
-    if (!window.confirm('This will add 9 default services. Continue?')) return
+    if (!window.confirm('This will add missing default services (skips duplicates). Continue?')) return
     setSeeding(true)
     try {
+      const existingNames = new Set(services.map((s) => s.name.toLowerCase()))
+      const toAdd = DEFAULT_SERVICES.filter((s) => !existingNames.has(s.name.toLowerCase()))
+
+      if (toAdd.length === 0) {
+        toast.success('All default services already exist — nothing to add')
+        setSeeding(false)
+        return
+      }
+
       await Promise.all(
-        DEFAULT_SERVICES.map((s) =>
+        toAdd.map((s) =>
           addDoc(collection(db, 'services'), { ...s, active: true, createdAt: serverTimestamp() })
         )
       )
-      toast.success('Default services loaded!')
+      const skipped = DEFAULT_SERVICES.length - toAdd.length
+      toast.success(`Added ${toAdd.length} service${toAdd.length > 1 ? 's' : ''}${skipped > 0 ? ` · ${skipped} already existed` : ''}`)
     } catch {
       toast.error('Failed to load defaults')
     } finally {
