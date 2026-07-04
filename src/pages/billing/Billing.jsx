@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, updateDoc, increment, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
+import { useSettings, calcPointsEarned, calcMaxRedemption } from '../../hooks/useSettings'
 import PageHeader from '../../components/PageHeader'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
@@ -12,6 +13,7 @@ export default function Billing() {
   const { docs: invoices, loading } = useCollection('invoices')
   const { docs: customers }         = useCollection('customers', 'name')
   const { docs: services }          = useCollection('services', 'name')
+  const { loyalty }                 = useSettings()
 
   const SERVICE_LIST = services.length > 0
     ? services.map((s) => ({ name: s.name, price: s.price ?? 0 }))
@@ -26,14 +28,20 @@ export default function Billing() {
   const [showForm, setShowForm]         = useState(false)
   const [customerName, setCustomerName] = useState('')
   const [customerId, setCustomerId]     = useState('')
+  const [customerPoints, setCustomerPoints] = useState(0)
   const [selectedServices, setSelectedServices] = useState([])
   const [discount, setDiscount]         = useState(0)
+  const [redeemPoints, setRedeemPoints] = useState(0)
   const [paymentMode, setPaymentMode]   = useState('Cash')
   const [saving, setSaving]             = useState(false)
   const [deleting, setDeleting]         = useState(null)
 
-  const subtotal = selectedServices.reduce((s, i) => s + i.price, 0)
-  const total    = Math.max(0, subtotal - Number(discount))
+  const subtotal      = selectedServices.reduce((s, i) => s + i.price, 0)
+  const redeemDiscount = redeemPoints * loyalty.redeemValue
+  const total         = Math.max(0, subtotal - Number(discount) - redeemDiscount)
+  const pointsEarned  = calcPointsEarned(total, loyalty)
+  const maxRedeemable = calcMaxRedemption(subtotal, customerPoints, loyalty)
+  const canRedeem     = customerPoints >= loyalty.minPointsRedeem
 
   function toggleService(svc) {
     setSelectedServices((prev) =>
@@ -43,11 +51,25 @@ export default function Billing() {
     )
   }
 
+  function selectCustomer(id) {
+    setCustomerId(id)
+    const c = customers.find((x) => x.id === id)
+    if (c) {
+      setCustomerName(c.name)
+      setCustomerPoints(c.loyaltyPoints ?? 0)
+    } else {
+      setCustomerPoints(0)
+    }
+    setRedeemPoints(0)
+  }
+
   function resetForm() {
     setCustomerName('')
     setCustomerId('')
+    setCustomerPoints(0)
     setSelectedServices([])
     setDiscount(0)
+    setRedeemPoints(0)
     setPaymentMode('Cash')
     setShowForm(false)
   }
@@ -57,7 +79,7 @@ export default function Billing() {
     if (!selectedServices.length) { toast.error('Select at least one service'); return }
     setSaving(true)
     try {
-      // Auto-create customer in background — check by name, default phone to 1111111111
+      // Auto-create customer in background
       let linkedId = customerId
       if (!linkedId && customerName) {
         try {
@@ -66,13 +88,9 @@ export default function Billing() {
           )
           if (existing.empty) {
             const newDoc = await addDoc(collection(db, 'customers'), {
-              name:          customerName.trim(),
-              phone:         '1111111111',
-              email:         '',
-              allergies:     '',
-              loyaltyPoints: 0,
-              totalVisits:   0,
-              createdAt:     serverTimestamp(),
+              name: customerName.trim(), phone: '1111111111',
+              email: '', allergies: '', loyaltyPoints: 0, totalVisits: 0,
+              createdAt: serverTimestamp(),
             })
             linkedId = newDoc.id
           } else {
@@ -85,24 +103,27 @@ export default function Billing() {
 
       await addDoc(collection(db, 'invoices'), {
         customerName,
-        customerId: linkedId || null,
-        services: selectedServices,
+        customerId:    linkedId || null,
+        services:      selectedServices,
         subtotal,
-        discount: Number(discount),
+        discount:      Number(discount),
+        redeemPoints:  redeemPoints,
+        redeemDiscount,
         total,
+        pointsEarned,
         paymentMode,
-        status: 'paid',
-        createdAt: serverTimestamp(),
+        status:        'paid',
+        createdAt:     serverTimestamp(),
       })
 
       if (linkedId) {
         await updateDoc(doc(db, 'customers', linkedId), {
           totalVisits:   increment(1),
-          loyaltyPoints: increment(Math.floor(total / 100)),
+          loyaltyPoints: increment(pointsEarned - redeemPoints),
         })
       }
 
-      toast.success('Invoice created')
+      toast.success(`Invoice created · +${pointsEarned} pts earned${redeemPoints > 0 ? ` · ${redeemPoints} pts redeemed` : ''}`)
       resetForm()
     } catch {
       toast.error('Failed to create invoice')
@@ -143,26 +164,54 @@ export default function Billing() {
         <div className="card mb-6 border-brand-200">
           <p className="text-sm font-medium text-gray-800 mb-4">New invoice</p>
           <form onSubmit={handleSave} className="space-y-4">
+
+            {/* Customer */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
                 <input className="input" required value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)} />
+                  onChange={(e) => { setCustomerName(e.target.value); setCustomerId(''); setCustomerPoints(0) }} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Link to existing customer</label>
-                <select className="input" value={customerId}
-                  onChange={(e) => {
-                    setCustomerId(e.target.value)
-                    const c = customers.find((x) => x.id === e.target.value)
-                    if (c) setCustomerName(c.name)
-                  }}>
+                <select className="input" value={customerId} onChange={(e) => selectCustomer(e.target.value)}>
                   <option value="">Walk-in / new</option>
-                  {customers.map((c) => <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>)}
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>
+                  ))}
                 </select>
               </div>
             </div>
 
+            {/* Points balance */}
+            {customerId && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-amber-800">
+                    Loyalty points balance: <span className="text-lg font-bold">{customerPoints}</span> pts
+                  </p>
+                  <p className="text-xs text-amber-600 mt-0.5">
+                    {canRedeem
+                      ? `Max redeemable: ${Math.floor(maxRedeemable / loyalty.redeemValue)} pts = ₹${maxRedeemable}`
+                      : `Need ${loyalty.minPointsRedeem} pts to redeem (${customerPoints} available)`}
+                  </p>
+                </div>
+                {canRedeem && subtotal > 0 && (
+                  <div className="text-right">
+                    <label className="block text-xs font-medium text-amber-800 mb-1">Redeem points</label>
+                    <input
+                      type="number" min="0"
+                      max={Math.floor(maxRedeemable / loyalty.redeemValue)}
+                      value={redeemPoints}
+                      onChange={(e) => setRedeemPoints(Math.min(Number(e.target.value), Math.floor(maxRedeemable / loyalty.redeemValue)))}
+                      className="input w-28 text-right"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Services */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-2">Services *</label>
               <div className="grid grid-cols-3 gap-2">
@@ -183,6 +232,7 @@ export default function Billing() {
               </div>
             </div>
 
+            {/* Totals */}
             <div className="grid grid-cols-3 gap-4 items-end">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Discount (₹)</label>
@@ -198,8 +248,10 @@ export default function Billing() {
               </div>
               <div className="card bg-brand-50 border-brand-200 text-right">
                 <p className="text-xs text-gray-500">Subtotal: ₹{subtotal}</p>
-                <p className="text-xs text-gray-500">Discount: ₹{discount}</p>
+                {Number(discount) > 0 && <p className="text-xs text-gray-500">Discount: −₹{discount}</p>}
+                {redeemPoints > 0 && <p className="text-xs text-green-600">Points: −₹{redeemDiscount} ({redeemPoints} pts)</p>}
                 <p className="text-base font-semibold text-brand-700">Total: ₹{total}</p>
+                <p className="text-xs text-amber-600 mt-1">+{pointsEarned} pts will be earned</p>
               </div>
             </div>
 
@@ -213,27 +265,29 @@ export default function Billing() {
         </div>
       )}
 
+      {/* Invoices table */}
       {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
         <div className="card p-0 overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Customer', 'Services', 'Subtotal', 'Discount', 'Total', 'Payment', 'Date', 'Actions'].map((h) => (
+                {['Customer', 'Services', 'Subtotal', 'Discount', 'Total', 'Pts Earned', 'Payment', 'Date', 'Actions'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {invoices.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-8 text-gray-400 text-sm">No invoices yet</td></tr>
+                <tr><td colSpan={9} className="text-center py-8 text-gray-400 text-sm">No invoices yet</td></tr>
               )}
               {invoices.map((inv) => (
                 <tr key={inv.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{inv.customerName}</td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{inv.services?.map((s) => s.name).join(', ')}</td>
                   <td className="px-4 py-3 text-gray-600">₹{inv.subtotal}</td>
-                  <td className="px-4 py-3 text-gray-600">₹{inv.discount}</td>
+                  <td className="px-4 py-3 text-gray-600">₹{inv.discount ?? 0}</td>
                   <td className="px-4 py-3 font-semibold text-gray-900">₹{inv.total}</td>
+                  <td className="px-4 py-3 text-amber-600 text-xs font-medium">+{inv.pointsEarned ?? 0} pts</td>
                   <td className="px-4 py-3"><span className="badge-blue">{inv.paymentMode}</span></td>
                   <td className="px-4 py-3 text-gray-600 text-xs">
                     {inv.createdAt?.toDate ? format(inv.createdAt.toDate(), 'dd MMM, h:mm a') : '—'}
