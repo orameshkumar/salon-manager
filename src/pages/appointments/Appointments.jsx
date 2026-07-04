@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, Timestamp, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
 import PageHeader from '../../components/PageHeader'
@@ -35,6 +35,23 @@ export default function Appointments() {
     setSaving(true)
     try {
       const dateTime = new Date(`${form.date}T${form.time}`)
+
+      // Auto-create customer if not already in customers collection
+      const existing = await getDocs(
+        query(collection(db, 'customers'), where('phone', '==', form.customerPhone))
+      )
+      if (existing.empty) {
+        await addDoc(collection(db, 'customers'), {
+          name:         form.customerName,
+          phone:        form.customerPhone,
+          email:        '',
+          allergies:    '',
+          loyaltyPoints: 0,
+          totalVisits:  0,
+          createdAt:    serverTimestamp(),
+        })
+      }
+
       await addDoc(collection(db, 'appointments'), {
         ...form,
         date: Timestamp.fromDate(dateTime),
