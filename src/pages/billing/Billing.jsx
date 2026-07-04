@@ -57,20 +57,29 @@ export default function Billing() {
     if (!selectedServices.length) { toast.error('Select at least one service'); return }
     setSaving(true)
     try {
-      // Auto-create customer if walk-in (no customerId and name entered)
+      // Auto-create customer in background — check by name, default phone to 1111111111
       let linkedId = customerId
       if (!linkedId && customerName) {
-        const existing = await getDocs(
-          query(collection(db, 'customers'), where('name', '==', customerName))
-        )
-        if (existing.empty) {
-          const newDoc = await addDoc(collection(db, 'customers'), {
-            name: customerName, phone: '', email: '', allergies: '',
-            loyaltyPoints: 0, totalVisits: 0, createdAt: serverTimestamp(),
-          })
-          linkedId = newDoc.id
-        } else {
-          linkedId = existing.docs[0].id
+        try {
+          const existing = await getDocs(
+            query(collection(db, 'customers'), where('name', '==', customerName.trim()))
+          )
+          if (existing.empty) {
+            const newDoc = await addDoc(collection(db, 'customers'), {
+              name:          customerName.trim(),
+              phone:         '1111111111',
+              email:         '',
+              allergies:     '',
+              loyaltyPoints: 0,
+              totalVisits:   0,
+              createdAt:     serverTimestamp(),
+            })
+            linkedId = newDoc.id
+          } else {
+            linkedId = existing.docs[0].id
+          }
+        } catch (custErr) {
+          console.error('Customer auto-create failed:', custErr)
         }
       }
 
