@@ -18,16 +18,38 @@ export default function SalonLogo({ size = 32, className = '' }) {
         fill="none" stroke="#d4af37" strokeWidth="0.8" opacity="0.28"
       />
 
-      {/* Scissors — Concept 1: crossed lines + circle handles */}
-      <line x1="34" y1="28" x2="72" y2="72" stroke="currentColor" strokeWidth="7" strokeLinecap="round"/>
-      <line x1="34" y1="72" x2="72" y2="28" stroke="currentColor" strokeWidth="7" strokeLinecap="round"/>
-      <circle cx="30" cy="24" r="10" fill="none" stroke="currentColor" strokeWidth="5"/>
-      <circle cx="30" cy="76" r="10" fill="none" stroke="currentColor" strokeWidth="5"/>
+      {/*
+        Scissors geometry:
+          Pivot at (33,50) — roughly 1/4 from handle rings.
+          Shanks angle outward so rings are nicely spread.
+          Blades extend at ±15° (30° total) from pivot to tips.
 
-      {/* Gold sparkle dots */}
-      <circle cx="78" cy="20" r="3.5" fill="#d4af37"/>
-      <circle cx="84" cy="30" r="2.2" fill="#d4af37" opacity="0.7"/>
-      <circle cx="76" cy="13" r="1.5" fill="#fde68a" opacity="0.8"/>
+          Upper: ring(20,31) → shank → pivot(33,50) → blade → tip(82,38)
+          Lower: ring(20,69) → shank → pivot(33,50) → blade → tip(82,62)
+      */}
+      <path
+        d="M20,31 L33,50 L82,38"
+        fill="none" stroke="currentColor" strokeWidth="7"
+        strokeLinecap="round" strokeLinejoin="round"
+      />
+      <path
+        d="M20,69 L33,50 L82,62"
+        fill="none" stroke="currentColor" strokeWidth="7"
+        strokeLinecap="round" strokeLinejoin="round"
+      />
+
+      {/* Pivot screw */}
+      <circle cx="33" cy="50" r="4.5" fill="#d4af37"/>
+      <circle cx="33" cy="50" r="2.5" fill="#92660a"/>
+
+      {/* Handle rings */}
+      <circle cx="18" cy="28" r="9" fill="none" stroke="currentColor" strokeWidth="5"/>
+      <circle cx="18" cy="72" r="9" fill="none" stroke="currentColor" strokeWidth="5"/>
+
+      {/* Gold sparkle dots near tips */}
+      <circle cx="86" cy="33" r="3.5" fill="#d4af37"/>
+      <circle cx="89" cy="44" r="2.2" fill="#d4af37" opacity="0.7"/>
+      <circle cx="83" cy="26" r="1.5" fill="#fde68a" opacity="0.8"/>
     </svg>
   )
 }
