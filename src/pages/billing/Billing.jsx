@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, updateDoc, increment, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
-import { useSettings, calcPointsEarned, calcMaxRedemption, getEffectivePoints } from '../../hooks/useSettings'
+import { useSettings, calcPointsEarned, calcMaxRedemption, getEffectivePoints, useUpiSettings } from '../../hooks/useSettings'
 import { useCommissionRules, calcTotalCommission } from '../../hooks/useCommissionRules'
 import PageHeader from '../../components/PageHeader'
 import { format } from 'date-fns'
@@ -16,6 +16,7 @@ export default function Billing() {
   const { docs: services }          = useCollection('services', 'name')
   const { docs: employees }         = useCollection('employees', 'name')
   const { loyalty }                 = useSettings()
+  const { upi }                     = useUpiSettings()
   const { rules: commissionRules }  = useCommissionRules()
 
   const activeStaff = employees.filter((e) => e.active !== false)
@@ -38,7 +39,7 @@ export default function Billing() {
   const [staffName, setStaffName]       = useState('')
   const [discount, setDiscount]         = useState(0)
   const [redeemPoints, setRedeemPoints] = useState(0)
-  const [paymentMode, setPaymentMode]   = useState('Cash')
+  const [paymentMode, setPaymentMode]   = useState('UPI')
   const [saving, setSaving]             = useState(false)
   const [deleting, setDeleting]         = useState(null)
 
@@ -97,7 +98,7 @@ export default function Billing() {
     setStaffName('')
     setDiscount(0)
     setRedeemPoints(0)
-    setPaymentMode('Cash')
+    setPaymentMode('UPI')
     setShowForm(false)
   }
 
@@ -306,6 +307,18 @@ export default function Billing() {
                   onChange={(e) => setPaymentMode(e.target.value)}>
                   {PAYMENT_MODES.map((m) => <option key={m}>{m}</option>)}
                 </select>
+                {paymentMode === 'UPI' && upi.upiId && (
+                  <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded-lg flex items-center gap-3">
+                    {upi.qrUrl && (
+                      <img src={upi.qrUrl} alt="UPI QR" className="w-14 h-14 object-contain rounded border border-purple-100 bg-white flex-shrink-0" />
+                    )}
+                    <div>
+                      {upi.merchantName && <p className="text-xs font-semibold text-purple-800">{upi.merchantName}</p>}
+                      <p className="text-xs font-mono text-purple-700">{upi.upiId}</p>
+                      <p className="text-xs text-purple-500 mt-0.5">Scan QR or pay to UPI ID above</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="card bg-brand-50 border-brand-200 text-right">
                 <p className="text-xs text-gray-500">Subtotal: ₹{subtotal}</p>

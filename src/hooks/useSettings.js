@@ -12,6 +12,27 @@ export const LOYALTY_DEFAULTS = {
   expiryDays:      0,         // 0 = never expire
 }
 
+export const UPI_DEFAULTS = {
+  upiId:        '',
+  merchantName: '',
+  qrUrl:        '',
+}
+
+export function useUpiSettings() {
+  const [upi, setUpi]       = useState(UPI_DEFAULTS)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'upi'), (snap) => {
+      if (snap.exists()) setUpi({ ...UPI_DEFAULTS, ...snap.data() })
+      setLoading(false)
+    }, () => setLoading(false))
+    return unsub
+  }, [])
+
+  return { upi, loading }
+}
+
 export function useSettings() {
   const [loyalty, setLoyalty] = useState(LOYALTY_DEFAULTS)
   const [loading, setLoading] = useState(true)

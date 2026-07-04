@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../firebase/config'
-import { useSettings, LOYALTY_DEFAULTS } from '../../hooks/useSettings'
+import { useSettings, LOYALTY_DEFAULTS, useUpiSettings, UPI_DEFAULTS } from '../../hooks/useSettings'
 import { useAuth } from '../../context/AuthContext'
 import { ADMIN_ROLES, FLOOR_ROLES, ALL_ROLES } from '../staff/Staff'
 import PageHeader from '../../components/PageHeader'
@@ -107,6 +107,12 @@ export default function Settings() {
   const [form, setForm]     = useState(LOYALTY_DEFAULTS)
   const [saving, setSaving] = useState(false)
 
+  const { upi } = useUpiSettings()
+  const [upiForm, setUpiForm]     = useState(UPI_DEFAULTS)
+  const [upiSaving, setUpiSaving] = useState(false)
+
+  useEffect(() => { setUpiForm(upi) }, [upi])
+
   useEffect(() => { setForm(loyalty) }, [loyalty])
 
   function f(k, v) { setForm((p) => ({ ...p, [k]: v })) }
@@ -130,6 +136,22 @@ export default function Settings() {
       toast.error('Failed to save settings')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleUpiSave(e) {
+    e.preventDefault()
+    setUpiSaving(true)
+    try {
+      await setDoc(doc(db, 'settings', 'upi'), {
+        ...upiForm,
+        updatedAt: serverTimestamp(),
+      })
+      toast.success('UPI settings saved')
+    } catch {
+      toast.error('Failed to save UPI settings')
+    } finally {
+      setUpiSaving(false)
     }
   }
 
@@ -257,6 +279,52 @@ export default function Settings() {
           </button>
         </div>
       </form>}
+
+      {/* UPI / Payment settings */}
+      {isAdmin && (
+        <form onSubmit={handleUpiSave} className="space-y-4">
+          <div className="card">
+            <p className="text-sm font-semibold text-gray-800 mb-1">UPI Payment Settings</p>
+            <p className="text-xs text-gray-500 mb-4">
+              UPI is set as the default payment method. Configure your merchant details below.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">UPI ID (VPA) *</label>
+                <input className="input" placeholder="e.g. salon@okaxis"
+                  value={upiForm.upiId}
+                  onChange={(e) => setUpiForm({ ...upiForm, upiId: e.target.value })} />
+                <p className="text-xs text-gray-400 mt-1">Your UPI address customers will pay to</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Merchant name</label>
+                <input className="input" placeholder="e.g. The Style Salon"
+                  value={upiForm.merchantName}
+                  onChange={(e) => setUpiForm({ ...upiForm, merchantName: e.target.value })} />
+                <p className="text-xs text-gray-400 mt-1">Shown to customers during payment</p>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">QR code image URL <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input className="input" placeholder="https://…/qr.png"
+                  value={upiForm.qrUrl}
+                  onChange={(e) => setUpiForm({ ...upiForm, qrUrl: e.target.value })} />
+                <p className="text-xs text-gray-400 mt-1">Paste a public URL to your UPI QR code image — shown on the billing screen when customer pays via UPI</p>
+              </div>
+              {upiForm.qrUrl && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-medium text-gray-700 mb-2">QR preview</p>
+                  <img src={upiForm.qrUrl} alt="UPI QR" className="w-36 h-36 object-contain border border-gray-200 rounded-lg" />
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end mt-4">
+              <button type="submit" className="btn-primary" disabled={upiSaving}>
+                {upiSaving ? 'Saving…' : 'Save UPI settings'}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
     </div>
   )
 }
