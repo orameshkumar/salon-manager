@@ -4,6 +4,7 @@ import { db } from '../../firebase/config'
 import { useSettings, LOYALTY_DEFAULTS, useUpiSettings, UPI_DEFAULTS } from '../../hooks/useSettings'
 import { useAuth } from '../../context/AuthContext'
 import { ADMIN_ROLES, FLOOR_ROLES, ALL_ROLES } from '../staff/Staff'
+import { useTheme, THEMES } from '../../context/ThemeContext'
 import PageHeader from '../../components/PageHeader'
 import toast from 'react-hot-toast'
 
@@ -102,6 +103,7 @@ function MyProfile() {
 export default function Settings() {
   const { profile } = useAuth()
   const isAdmin = (profile?.roles ?? []).some((r) => ADMIN_ROLES.includes(r))
+  const { theme, setTheme } = useTheme()
 
   const { loyalty, loading } = useSettings()
   const [form, setForm]     = useState(LOYALTY_DEFAULTS)
@@ -168,6 +170,26 @@ export default function Settings() {
       <PageHeader title="Settings" subtitle="Profile and salon configuration" />
 
       <MyProfile />
+
+      {/* Appearance */}
+      <div className="card">
+        <p className="text-sm font-semibold text-gray-800 mb-1">Appearance</p>
+        <p className="text-xs text-gray-500 mb-4">Choose a colour theme for the app. Your preference is saved locally.</p>
+        <div className="flex flex-wrap gap-4">
+          {THEMES.map((t) => (
+            <button key={t.id} onClick={() => setTheme(t.id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                theme === t.id
+                  ? 'border-brand-500 bg-brand-50 text-brand-700 font-medium'
+                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}>
+              <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: t.color }} />
+              {t.label}
+              {t.dark && <span className="text-xs text-gray-400">(dark)</span>}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {!isAdmin && (
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">

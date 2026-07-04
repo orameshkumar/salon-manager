@@ -4,6 +4,7 @@ import { ADMIN_ROLES } from '../pages/staff/Staff'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
+import { useTheme, THEMES } from '../context/ThemeContext'
 
 const NAV = [
   { to: '/',             label: 'Dashboard',    icon: '⊞' },
@@ -25,6 +26,7 @@ const NAV = [
 export default function Layout({ children }) {
   const { profile } = useAuth()
   const navigate    = useNavigate()
+  const { theme, setTheme } = useTheme()
   const [open, setOpen] = useState(false)
 
   async function handleSignOut() {
@@ -69,6 +71,21 @@ export default function Layout({ children }) {
       </nav>
 
       <div className="px-3 py-4 border-t border-gray-200">
+        {/* Theme switcher */}
+        <div className="px-3 mb-3">
+          <p className="text-xs text-gray-400 mb-1.5">Theme</p>
+          <div className="flex gap-1.5 flex-wrap">
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                title={t.label}
+                onClick={() => setTheme(t.id)}
+                className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${theme === t.id ? 'border-gray-600 scale-110' : 'border-transparent'}`}
+                style={{ backgroundColor: t.color }}
+              />
+            ))}
+          </div>
+        </div>
         <div className="px-3 py-2 mb-1">
           <p className="text-xs font-medium text-gray-800 truncate">{profile?.name ?? 'Staff'}</p>
           <p className="text-xs text-gray-500 capitalize">
