@@ -9,14 +9,14 @@ import toast from 'react-hot-toast'
 
 function MyProfile() {
   const { user, profile } = useAuth()
-  const [name,     setName]     = useState(profile?.name  ?? '')
+  const [name,     setName]     = useState(profile?.name ?? user?.displayName ?? '')
   const [roles,    setRoles]    = useState(profile?.roles ?? [])
   const [saving,   setSaving]   = useState(false)
 
   useEffect(() => {
-    setName(profile?.name  ?? '')
+    setName(profile?.name ?? user?.displayName ?? '')
     setRoles(profile?.roles ?? [])
-  }, [profile])
+  }, [profile, user])
 
   function toggleRole(r) {
     setRoles((prev) => prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r])
@@ -54,7 +54,7 @@ function MyProfile() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Display name *</label>
-            <input className="input" required value={name}
+            <input className="input" required value={name} placeholder="Enter your full name"
               onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
@@ -141,8 +141,6 @@ export default function Settings() {
   const exampleDiscount = exampleRedeem * Number(form.redeemValue)
   const exampleMaxPct   = Math.floor(exampleTotal * Number(form.maxRedeemPct) / 100)
 
-  if (loading) return <div className="p-6 text-sm text-gray-500">Loading…</div>
-
   return (
     <div className="p-6 max-w-2xl space-y-6">
       <PageHeader title="Settings" subtitle="Profile and salon configuration" />
@@ -155,7 +153,9 @@ export default function Settings() {
         </div>
       )}
 
-      {isAdmin && <form onSubmit={handleSave} className="space-y-6">
+      {isAdmin && loading && <div className="text-sm text-gray-500">Loading settings…</div>}
+
+      {isAdmin && !loading && <form onSubmit={handleSave} className="space-y-6">
 
         {/* Earning */}
         <div className="card">
