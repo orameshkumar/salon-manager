@@ -3,6 +3,7 @@ import { collection, addDoc, deleteDoc, doc, serverTimestamp, updateDoc, increme
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
 import { useSettings, calcPointsEarned, calcMaxRedemption, getEffectivePoints } from '../../hooks/useSettings'
+import { useCommissionRules, calcTotalCommission } from '../../hooks/useCommissionRules'
 import PageHeader from '../../components/PageHeader'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
@@ -15,6 +16,7 @@ export default function Billing() {
   const { docs: services }          = useCollection('services', 'name')
   const { docs: employees }         = useCollection('employees', 'name')
   const { loyalty }                 = useSettings()
+  const { rules: commissionRules }  = useCommissionRules()
 
   const activeStaff = employees.filter((e) => e.active !== false)
 
@@ -22,6 +24,7 @@ export default function Billing() {
   const SERVICE_LIST = services.length > 0
     ? services.map((s) => ({
         name: s.name, price: s.price ?? 0,
+        category: s.category ?? '',
         commissionType: s.commissionType ?? 'none',
         commissionValue: s.commissionValue ?? 0,
       }))
@@ -58,12 +61,8 @@ export default function Billing() {
   const maxRedeemable = calcMaxRedemption(subtotal, customerPoints, loyalty)
   const canRedeem     = customerPoints >= loyalty.minPointsRedeem
 
-  // Staff commission: sum per selected service
-  const staffCommission = selectedServices.reduce((sum, svc) => {
-    if (!svc.commissionType || svc.commissionType === 'none') return sum
-    if (svc.commissionType === 'percentage') return sum + Math.round((svc.price * (svc.commissionValue ?? 0)) / 100)
-    return sum + (svc.commissionValue ?? 0)
-  }, 0)
+  // Staff commission: use priority-chain rules (staff override → per-service → category default)
+  const staffCommission = calcTotalCommission(selectedServices, staffId, commissionRules)
 
   function toggleService(svc) {
     setSelectedServices((prev) =>

@@ -16,6 +16,7 @@ import Stations from './pages/stations/Stations'
 import CustomerProfile from './pages/customers/CustomerProfile'
 import Payroll from './pages/payroll/Payroll'
 import Expenses from './pages/expenses/Expenses'
+import CommissionRules from './pages/commissionRules/CommissionRules'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
@@ -47,6 +48,7 @@ function AppRoutes() {
       <Route path="/stations" element={<ManagerRoute><Stations /></ManagerRoute>} />
       <Route path="/payroll" element={<ManagerRoute><Payroll /></ManagerRoute>} />
       <Route path="/expenses" element={<ManagerRoute><Expenses /></ManagerRoute>} />
+      <Route path="/commission-rules" element={<ManagerRoute><CommissionRules /></ManagerRoute>} />
       <Route path="/customers/:id" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
