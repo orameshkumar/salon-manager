@@ -120,10 +120,10 @@ export default function Reports() {
         ))}
         {range === 'Custom' && (
           <div className="flex items-center gap-2 ml-2">
-            <input type="date" className="input w-36" value={custom.from}
+            <input type="date" className="input w-full sm:w-36" value={custom.from}
               onChange={(e) => setCustom({ ...custom, from: e.target.value })} />
             <span className="text-xs text-gray-500">to</span>
-            <input type="date" className="input w-36" value={custom.to}
+            <input type="date" className="input w-full sm:w-36" value={custom.to}
               onChange={(e) => setCustom({ ...custom, to: e.target.value })} />
           </div>
         )}

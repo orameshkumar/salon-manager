@@ -173,7 +173,7 @@ export default function Inventory() {
           <p className="text-sm font-medium text-gray-800 mb-4">
             {editDoc ? `Edit — ${editDoc.name}` : 'Add inventory item'}
           </p>
-          <form onSubmit={handleSave} className="grid grid-cols-3 gap-4">
+          <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
               <input className="input" required value={form.name}
@@ -224,7 +224,8 @@ export default function Inventory() {
 
       {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
         <div className="card p-0 overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 {['Name', 'Category', 'SKU', 'Quantity', 'Reorder at', 'Cost price', 'Adjust', 'Actions'].map((h) => (
@@ -275,6 +276,7 @@ export default function Inventory() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

@@ -56,16 +56,16 @@ export default function CustomerProfile() {
             <p className="text-xs text-red-600 mt-1">⚠ Allergies: {customer.allergies}</p>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <div className="card py-2 px-3 min-w-[80px]">
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="card py-2 px-3">
             <p className="text-xl font-semibold text-brand-700">{customer.totalVisits ?? 0}</p>
             <p className="text-xs text-gray-500">Visits</p>
           </div>
-          <div className="card py-2 px-3 min-w-[80px]">
+          <div className="card py-2 px-3">
             <p className="text-xl font-semibold text-amber-600">{customer.loyaltyPoints ?? 0}</p>
             <p className="text-xs text-gray-500">Points</p>
           </div>
-          <div className="card py-2 px-3 min-w-[80px]">
+          <div className="card py-2 px-3">
             <p className="text-xl font-semibold text-green-600">₹{totalSpend.toLocaleString()}</p>
             <p className="text-xs text-gray-500">Total spend</p>
           </div>
@@ -80,7 +80,8 @@ export default function CustomerProfile() {
         {appointments.length === 0
           ? <p className="text-sm text-gray-400 text-center py-6">No appointments yet</p>
           : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   {['Date & time', 'Service', 'Stylist', 'Station', 'Status', 'Notes'].map((h) => (
@@ -105,6 +106,7 @@ export default function CustomerProfile() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
       </div>
 
@@ -116,7 +118,8 @@ export default function CustomerProfile() {
         {invoices.length === 0
           ? <p className="text-sm text-gray-400 text-center py-6">No invoices yet</p>
           : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   {['Date', 'Services', 'Subtotal', 'Discount', 'Total', 'Points', 'Payment'].map((h) => (
@@ -140,6 +143,7 @@ export default function CustomerProfile() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
       </div>
     </div>

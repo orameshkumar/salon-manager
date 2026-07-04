@@ -240,7 +240,7 @@ export default function Staff() {
           <p className="text-sm font-medium text-gray-800 mb-4">
             {editDoc ? `Edit — ${editDoc.name}` : 'Add new staff member'}
           </p>
-          <form onSubmit={handleSave} className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Full name *</label>
               <input
@@ -347,7 +347,8 @@ export default function Staff() {
         <p className="text-sm text-gray-500">Loading…</p>
       ) : (
         <div className="card p-0 overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 {['Name', 'Email', 'Phone', 'Role', 'Services', 'Status', 'Actions'].map((h) => (
@@ -422,6 +423,7 @@ export default function Staff() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

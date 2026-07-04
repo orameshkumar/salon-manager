@@ -154,7 +154,7 @@ export default function Attendance() {
         <>
           {/* Date + summary */}
           <div className="flex items-center gap-4 mb-6">
-            <input type="date" className="input w-44" value={date}
+            <input type="date" className="input w-full sm:w-44" value={date}
               onChange={(e) => setDate(e.target.value)} />
             <div className="flex gap-3">
               {[
@@ -175,7 +175,8 @@ export default function Attendance() {
           {/* Employee table */}
           {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
             <div className="card p-0 overflow-hidden">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[560px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     {['Employee', 'Role', 'Status', 'Mark', 'Actions'].map((h) => (
@@ -235,6 +236,7 @@ export default function Attendance() {
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </>
@@ -244,14 +246,15 @@ export default function Attendance() {
       {view === 'monthly' && (
         <>
           <div className="flex items-center gap-3 mb-6">
-            <input type="month" className="input w-44" value={monthDate}
+            <input type="month" className="input w-full sm:w-44" value={monthDate}
               onChange={(e) => setMonthDate(e.target.value)} />
             <p className="text-xs text-gray-500">{workingDays} working days this month</p>
           </div>
 
           {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
             <div className="card p-0 overflow-hidden">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[560px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     {['Employee', 'Role', 'Present', 'Half day', 'Absent', 'Leave', 'Attendance %'].map((h) => (
@@ -294,6 +297,7 @@ export default function Attendance() {
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </>

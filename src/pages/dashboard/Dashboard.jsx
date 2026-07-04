@@ -69,7 +69,7 @@ export default function Dashboard() {
         {appointments.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">No appointments today</p>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[520px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 {['Time', 'Customer', 'Service', 'Stylist', 'Station', 'Status'].map((h) => (
@@ -93,7 +93,7 @@ export default function Dashboard() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
 

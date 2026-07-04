@@ -194,7 +194,7 @@ export default function Billing() {
           <form onSubmit={handleSave} className="space-y-4">
 
             {/* Customer */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
                 <input className="input" required value={customerName}
@@ -242,7 +242,7 @@ export default function Billing() {
             {/* Services */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-2">Services *</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {SERVICE_LIST.map((svc) => {
                   const selected = selectedServices.some((s) => s.name === svc.name)
                   return (
@@ -261,7 +261,7 @@ export default function Billing() {
             </div>
 
             {/* Totals */}
-            <div className="grid grid-cols-3 gap-4 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Discount (₹)</label>
                 <input className="input" type="number" min="0" value={discount}
@@ -296,7 +296,8 @@ export default function Billing() {
       {/* Invoices table */}
       {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
         <div className="card p-0 overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[780px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 {['Customer', 'Services', 'Subtotal', 'Discount', 'Total', 'Pts Earned', 'Payment', 'Date', 'Actions'].map((h) => (  // eslint-disable-line
@@ -336,6 +337,7 @@ export default function Billing() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
