@@ -76,17 +76,36 @@ export default function Appointments() {
         })
         toast.success('Appointment updated')
       } else {
-        // Auto-create customer if not exists
-        const existing = await getDocs(
-          query(collection(db, 'customers'), where('phone', '==', form.customerPhone))
-        )
-        if (existing.empty) {
-          await addDoc(collection(db, 'customers'), {
-            name: form.customerName, phone: form.customerPhone,
-            email: '', allergies: '', loyaltyPoints: 0, totalVisits: 0,
-            createdAt: serverTimestamp(),
-          })
+        // Auto-create customer if not exists (check by phone, fallback to name)
+        try {
+          let existing = null
+          if (form.customerPhone) {
+            const snap = await getDocs(
+              query(collection(db, 'customers'), where('phone', '==', form.customerPhone.trim()))
+            )
+            existing = snap.empty ? null : snap.docs[0]
+          }
+          if (!existing && form.customerName) {
+            const snap = await getDocs(
+              query(collection(db, 'customers'), where('name', '==', form.customerName.trim()))
+            )
+            existing = snap.empty ? null : snap.docs[0]
+          }
+          if (!existing) {
+            await addDoc(collection(db, 'customers'), {
+              name:          form.customerName.trim(),
+              phone:         form.customerPhone.trim(),
+              email:         '',
+              allergies:     '',
+              loyaltyPoints: 0,
+              totalVisits:   0,
+              createdAt:     serverTimestamp(),
+            })
+          }
+        } catch (custErr) {
+          console.error('Customer auto-create failed:', custErr)
         }
+
         await addDoc(collection(db, 'appointments'), {
           ...form,
           date: Timestamp.fromDate(dateTime),
