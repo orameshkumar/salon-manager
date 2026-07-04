@@ -107,11 +107,9 @@ export default function Services() {
         subtitle={`${services.length} services`}
         action={
           <div className="flex gap-2">
-            {services.length === 0 && (
-              <button className="btn-secondary" onClick={loadDefaults} disabled={seeding}>
-                {seeding ? 'Loading…' : 'Load defaults'}
-              </button>
-            )}
+            <button className="btn-secondary" onClick={loadDefaults} disabled={seeding}>
+              {seeding ? 'Loading…' : 'Load defaults'}
+            </button>
             <button className="btn-primary" onClick={openAdd}>+ Add service</button>
           </div>
         }
