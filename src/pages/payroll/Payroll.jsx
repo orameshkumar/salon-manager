@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
   serverTimestamp, query, where, getDocs,
@@ -6,70 +6,179 @@ import {
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
 import PageHeader from '../../components/PageHeader'
-import { format, getDaysInMonth, eachDayOfInterval, startOfMonth, endOfMonth, isWeekend } from 'date-fns'
+import { format, getDaysInMonth, eachDayOfInterval, startOfMonth, endOfMonth, isWeekend, parseISO } from 'date-fns'
 import toast from 'react-hot-toast'
 
 const EMPTY_EDIT = { baseSalary: '', bonus: '', deductions: '', absenceDays: '', notes: '', paid: false }
 
-// ── Formula modal ─────────────────────────────────────────────────────────────
-function FormulaModal({ month, activeStaff, onConfirm, onClose }) {
+// ── Formula + staff-selection modal ──────────────────────────────────────────
+function GenerateModal({ activeStaff, existingIds, month, onConfirm, onClose }) {
   const [year, mon] = month.split('-').map(Number)
-  const calendarDays  = getDaysInMonth(new Date(year, mon - 1))
-  const autoWorking   = eachDayOfInterval({
-    start: startOfMonth(new Date(year, mon - 1)),
-    end:   endOfMonth(new Date(year, mon - 1)),
-  }).filter((d) => !isWeekend(d)).length
+  const monthStart     = startOfMonth(new Date(year, mon - 1))
+  const monthEnd       = endOfMonth(new Date(year, mon - 1))
+  const calendarDays   = getDaysInMonth(new Date(year, mon - 1))
+  const autoWorking    = eachDayOfInterval({ start: monthStart, end: monthEnd })
+    .filter((d) => !isWeekend(d)).length
 
-  const [formula, setFormula] = useState({
-    workingDays:   String(autoWorking),
-    absentDeduct:  'full',
-    halfDayDeduct: 'half',
-    leaveDeduct:   'none',
-    useAttendance: true,
-  })
+  const defaultFrom = format(monthStart, 'yyyy-MM-dd')
+  const defaultTo   = format(monthEnd,   'yyyy-MM-dd')
 
-  const absentFactor  = { full: 1, half: 0.5, none: 0 }[formula.absentDeduct]
-  const halfDayFactor = { half: 0.5, none: 0 }[formula.halfDayDeduct]
-  const leaveFactor   = { none: 0, full: 1 }[formula.leaveDeduct]
+  // Staff not yet generated for this month
+  const eligible = activeStaff.filter((e) => !existingIds.has(e.id))
+
+  const [dateFrom,      setDateFrom]      = useState(defaultFrom)
+  const [dateTo,        setDateTo]        = useState(defaultTo)
+  const [selectedIds,   setSelectedIds]   = useState(() => new Set(eligible.map((e) => e.id)))
+  const [workingDays,   setWorkingDays]   = useState(String(autoWorking))
+  const [useAttendance, setUseAttendance] = useState(true)
+  const [absentDeduct,  setAbsentDeduct]  = useState('full')
+  const [halfDayDeduct, setHalfDayDeduct] = useState('half')
+  const [leaveDeduct,   setLeaveDeduct]   = useState('none')
+
+  const absentFactor  = { full: 1, half: 0.5, none: 0 }[absentDeduct]
+  const halfDayFactor = { half: 0.5, none: 0 }[halfDayDeduct]
+  const leaveFactor   = { none: 0, full: 1 }[leaveDeduct]
+
+  const allSelected = eligible.length > 0 && selectedIds.size === eligible.length
+  const someSelected = selectedIds.size > 0 && !allSelected
+
+  function toggleAll() {
+    if (allSelected) setSelectedIds(new Set())
+    else setSelectedIds(new Set(eligible.map((e) => e.id)))
+  }
+
+  function toggleOne(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function handleConfirm() {
+    if (selectedIds.size === 0) { toast.error('Select at least one staff member'); return }
+    if (!dateFrom || !dateTo)   { toast.error('Set a valid date range'); return }
+    if (dateFrom > dateTo)      { toast.error('From date must be before To date'); return }
+    onConfirm({
+      staffIds:      [...selectedIds],
+      dateFrom,
+      dateTo,
+      workingDays:   Number(workingDays) || autoWorking,
+      useAttendance,
+      absentFactor,
+      halfDayFactor,
+      leaveFactor,
+    })
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-          <p className="text-sm font-semibold text-gray-800">Salary generation — {month}</p>
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+          <p className="text-sm font-semibold text-gray-800">Generate salaries — {month}</p>
           <button className="text-gray-400 hover:text-gray-600 text-lg leading-none" onClick={onClose}>✕</button>
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+
+          {/* Date range */}
+          <div>
+            <p className="text-xs font-semibold text-gray-700 mb-2">Attendance period</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">From</label>
+                <input type="date" className="input" value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">To</label>
+                <input type="date" className="input" value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)} />
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Attendance records in this range are used to calculate deductions.
+            </p>
+          </div>
+
+          {/* Staff selection */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-gray-700">Select staff</p>
+              <span className="text-xs text-gray-400">{selectedIds.size} of {eligible.length} selected</span>
+            </div>
+
+            {eligible.length === 0 ? (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                All active staff already have salary records for {month}.
+              </p>
+            ) : (
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                {/* Select all row */}
+                <label className="flex items-center gap-3 px-3 py-2 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => { if (el) el.indeterminate = someSelected }}
+                    onChange={toggleAll}
+                    className="w-4 h-4 rounded accent-brand-600"
+                  />
+                  <span className="text-xs font-semibold text-gray-700">Select all</span>
+                </label>
+                {/* Individual rows */}
+                <div className="max-h-44 overflow-y-auto divide-y divide-gray-100">
+                  {eligible.map((emp) => (
+                    <label key={emp.id}
+                      className="flex items-center justify-between gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(emp.id)}
+                          onChange={() => toggleOne(emp.id)}
+                          className="w-4 h-4 rounded accent-brand-600"
+                        />
+                        <span className="text-sm text-gray-800">{emp.name}</span>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        ₹{(emp.baseSalary ?? 0).toLocaleString()} / {emp.salaryType ?? 'monthly'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Working days + attendance toggle */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Working days in month</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Working days</label>
               <input className="input" type="number" min="1" max={calendarDays}
-                value={formula.workingDays}
-                onChange={(e) => setFormula({ ...formula, workingDays: e.target.value })} />
-              <p className="text-xs text-gray-400 mt-1">
-                {autoWorking} weekdays · {calendarDays} calendar days
-              </p>
+                value={workingDays} onChange={(e) => setWorkingDays(e.target.value)} />
+              <p className="text-xs text-gray-400 mt-1">{autoWorking} weekdays · {calendarDays} calendar days</p>
             </div>
             <div className="flex flex-col justify-center">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={formula.useAttendance}
-                  onChange={(e) => setFormula({ ...formula, useAttendance: e.target.checked })}
+                <input type="checkbox" checked={useAttendance}
+                  onChange={(e) => setUseAttendance(e.target.checked)}
                   className="w-4 h-4 rounded accent-brand-600" />
                 <span className="text-sm text-gray-700">Apply attendance deductions</span>
               </label>
-              <p className="text-xs text-gray-400 mt-1">Reads Attendance records for {month}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Reads records from {dateFrom} → {dateTo}
+              </p>
             </div>
           </div>
 
-          {formula.useAttendance && (
+          {/* Deduction rules */}
+          {useAttendance && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
               <p className="text-xs font-semibold text-amber-800">Deduction rules</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Absent day</label>
-                  <select className="input text-xs" value={formula.absentDeduct}
-                    onChange={(e) => setFormula({ ...formula, absentDeduct: e.target.value })}>
+                  <select className="input text-xs" value={absentDeduct} onChange={(e) => setAbsentDeduct(e.target.value)}>
                     <option value="full">Deduct 1 full day</option>
                     <option value="half">Deduct half day</option>
                     <option value="none">No deduction</option>
@@ -77,24 +186,23 @@ function FormulaModal({ month, activeStaff, onConfirm, onClose }) {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Half-day</label>
-                  <select className="input text-xs" value={formula.halfDayDeduct}
-                    onChange={(e) => setFormula({ ...formula, halfDayDeduct: e.target.value })}>
+                  <select className="input text-xs" value={halfDayDeduct} onChange={(e) => setHalfDayDeduct(e.target.value)}>
                     <option value="half">Deduct half day</option>
                     <option value="none">No deduction</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Leave day</label>
-                  <select className="input text-xs" value={formula.leaveDeduct}
-                    onChange={(e) => setFormula({ ...formula, leaveDeduct: e.target.value })}>
+                  <select className="input text-xs" value={leaveDeduct} onChange={(e) => setLeaveDeduct(e.target.value)}>
                     <option value="none">No deduction (paid)</option>
                     <option value="full">Deduct 1 day (unpaid)</option>
                   </select>
                 </div>
               </div>
-
               <div className="p-2 bg-white rounded border border-amber-200 text-xs">
-                <p className="font-medium text-gray-600 mb-1">Formula: Day rate = Base salary ÷ {formula.workingDays || '?'}</p>
+                <p className="font-medium text-gray-600 mb-1">
+                  Day rate = Base salary ÷ {workingDays || '?'}
+                </p>
                 <p className="text-gray-700 font-mono">
                   Deduction = {[
                     absentFactor  > 0 && `absent × ${absentFactor} × dayRate`,
@@ -105,24 +213,20 @@ function FormulaModal({ month, activeStaff, onConfirm, onClose }) {
               </div>
             </div>
           )}
-
-          <p className="text-xs text-gray-500">
-            Generating for <span className="font-medium">{activeStaff.length} staff</span> with base salary set.
-            You can edit every field individually after generation.
-          </p>
         </div>
 
-        <div className="px-5 py-4 border-t border-gray-200 flex gap-2 justify-end">
-          <button className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" onClick={() => onConfirm({
-            workingDays:   Number(formula.workingDays) || autoWorking,
-            useAttendance: formula.useAttendance,
-            absentFactor,
-            halfDayFactor,
-            leaveFactor,
-          })}>
-            Generate salaries
-          </button>
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-200 flex items-center justify-between flex-shrink-0 gap-3">
+          <p className="text-xs text-gray-500">
+            Will generate <span className="font-medium">{selectedIds.size}</span> record{selectedIds.size !== 1 ? 's' : ''}.
+            Each can be edited individually after.
+          </p>
+          <div className="flex gap-2">
+            <button className="btn-secondary" onClick={onClose}>Cancel</button>
+            <button className="btn-primary" onClick={handleConfirm} disabled={selectedIds.size === 0}>
+              Generate {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -134,27 +238,28 @@ export default function Payroll() {
   const { docs: employees }          = useCollection('employees', 'name')
   const { docs: salaries, loading }  = useCollection('salaries')
 
-  const [month, setMonth]           = useState(format(new Date(), 'yyyy-MM'))
-  const [showFormula, setShowFormula] = useState(false)
-  const [generating, setGen]        = useState(false)
-  const [editDoc, setEditDoc]       = useState(null)
-  const [editForm, setEditForm]     = useState(EMPTY_EDIT)
-  const [saving, setSaving]         = useState(false)
-  const [deleting, setDeleting]     = useState(null)
+  const [month, setMonth]             = useState(format(new Date(), 'yyyy-MM'))
+  const [showModal, setShowModal]     = useState(false)
+  const [generating, setGen]          = useState(false)
+  const [editDoc, setEditDoc]         = useState(null)
+  const [editForm, setEditForm]       = useState(EMPTY_EDIT)
+  const [saving, setSaving]           = useState(false)
+  const [deleting, setDeleting]       = useState(null)
 
   const activeStaff   = employees.filter((e) => e.active !== false && e.baseSalary)
   const monthSalaries = salaries.filter((s) => s.month === month)
+  const existingIds   = useMemo(() => new Set(monthSalaries.map((s) => s.employeeId)), [monthSalaries])
+
   const totalPayable  = monthSalaries.reduce((s, r) => s + (r.total ?? 0), 0)
   const totalPaid     = monthSalaries.filter((r) => r.paid).reduce((s, r) => s + (r.total ?? 0), 0)
 
-  async function fetchAttendanceSummary(targetMonth) {
-    const [year, mon] = targetMonth.split('-').map(Number)
-    const monthStart = startOfMonth(new Date(year, mon - 1))
-    const monthEnd   = endOfMonth(new Date(year, mon - 1))
+  async function fetchAttendanceSummary(dateFrom, dateTo) {
+    const fromTs = new Date(dateFrom + 'T00:00:00')
+    const toTs   = new Date(dateTo   + 'T23:59:59')
     const snap = await getDocs(
       query(collection(db, 'attendance'),
-        where('date', '>=', monthStart),
-        where('date', '<=', monthEnd))
+        where('date', '>=', fromTs),
+        where('date', '<=', toTs))
     )
     const summary = {}
     for (const d of snap.docs) {
@@ -168,53 +273,53 @@ export default function Payroll() {
     return summary
   }
 
-  async function handleGenerate(formula) {
-    setShowFormula(false)
-    if (!activeStaff.length) { toast.error('No active staff with base salary set'); return }
+  async function handleGenerate(opts) {
+    setShowModal(false)
     setGen(true)
     try {
-      const existingSnap = await getDocs(
-        query(collection(db, 'salaries'), where('month', '==', month))
-      )
-      const existingIds = new Set(existingSnap.docs.map((d) => d.data().employeeId))
-      const toAdd = activeStaff.filter((e) => !existingIds.has(e.id))
-      if (!toAdd.length) { toast.success('Salaries already generated for this month'); return }
+      const staffToGen = activeStaff.filter((e) => opts.staffIds.includes(e.id))
+      if (!staffToGen.length) { toast.error('No staff selected'); return }
 
-      const attendance = formula.useAttendance ? await fetchAttendanceSummary(month) : {}
+      const attendance = opts.useAttendance
+        ? await fetchAttendanceSummary(opts.dateFrom, opts.dateTo)
+        : {}
 
-      await Promise.all(toAdd.map((e) => {
+      await Promise.all(staffToGen.map((e) => {
         const base    = e.baseSalary ?? 0
         const att     = attendance[e.id] ?? { absent: 0, halfDay: 0, leave: 0 }
-        const dayRate = formula.workingDays > 0 ? base / formula.workingDays : 0
-        const absenceDeduction = formula.useAttendance
+        const dayRate = opts.workingDays > 0 ? base / opts.workingDays : 0
+        const absenceDeduction = opts.useAttendance
           ? Math.round(
-              att.absent  * formula.absentFactor  * dayRate +
-              att.halfDay * formula.halfDayFactor  * dayRate +
-              att.leave   * formula.leaveFactor    * dayRate
+              att.absent  * opts.absentFactor  * dayRate +
+              att.halfDay * opts.halfDayFactor  * dayRate +
+              att.leave   * opts.leaveFactor    * dayRate
             )
           : 0
-        const absenceDays = formula.useAttendance
-          ? att.absent * formula.absentFactor +
-            att.halfDay * formula.halfDayFactor +
-            att.leave   * formula.leaveFactor
+        const absenceDays = opts.useAttendance
+          ? att.absent  * opts.absentFactor +
+            att.halfDay * opts.halfDayFactor +
+            att.leave   * opts.leaveFactor
           : 0
 
         return addDoc(collection(db, 'salaries'), {
-          employeeId:   e.id,
-          employeeName: e.name,
+          employeeId:       e.id,
+          employeeName:     e.name,
           month,
-          baseSalary:   base,
-          bonus:        0,
-          deductions:   absenceDeduction,
+          periodFrom:       opts.dateFrom,
+          periodTo:         opts.dateTo,
+          baseSalary:       base,
+          bonus:            0,
+          deductions:       absenceDeduction,
           absenceDays,
-          absenceBreakdown: formula.useAttendance ? att : null,
-          workingDays:  formula.workingDays,
-          total:        Math.max(0, base - absenceDeduction),
-          paid:         false,
-          createdAt:    serverTimestamp(),
+          absenceBreakdown: opts.useAttendance ? att : null,
+          workingDays:      opts.workingDays,
+          total:            Math.max(0, base - absenceDeduction),
+          paid:             false,
+          createdAt:        serverTimestamp(),
         })
       }))
-      toast.success(`Generated ${toAdd.length} salary record${toAdd.length > 1 ? 's' : ''}`)
+
+      toast.success(`Generated ${staffToGen.length} salary record${staffToGen.length > 1 ? 's' : ''}`)
     } catch (err) {
       console.error(err)
       toast.error('Failed to generate salaries')
@@ -288,12 +393,13 @@ export default function Payroll() {
 
   return (
     <div className="p-6">
-      {showFormula && (
-        <FormulaModal
+      {showModal && (
+        <GenerateModal
           month={month}
           activeStaff={activeStaff}
+          existingIds={existingIds}
           onConfirm={handleGenerate}
-          onClose={() => setShowFormula(false)}
+          onClose={() => setShowModal(false)}
         />
       )}
 
@@ -301,7 +407,7 @@ export default function Payroll() {
         title="Payroll"
         subtitle={`${month} · ₹${totalPaid.toLocaleString()} paid of ₹${totalPayable.toLocaleString()}`}
         action={
-          <button className="btn-primary" onClick={() => setShowFormula(true)} disabled={generating}>
+          <button className="btn-primary" onClick={() => setShowModal(true)} disabled={generating}>
             {generating ? 'Generating…' : 'Generate salaries'}
           </button>
         }
@@ -313,9 +419,9 @@ export default function Payroll() {
           onChange={(e) => setMonth(e.target.value)} />
         <div className="flex flex-wrap gap-3">
           {[
-            { label: 'Total payable', val: `₹${totalPayable.toLocaleString()}`,               color: 'text-gray-800' },
-            { label: 'Paid',          val: `₹${totalPaid.toLocaleString()}`,                   color: 'text-green-600' },
-            { label: 'Pending',       val: `₹${(totalPayable - totalPaid).toLocaleString()}`,  color: 'text-amber-600' },
+            { label: 'Total payable', val: `₹${totalPayable.toLocaleString()}`,              color: 'text-gray-800' },
+            { label: 'Paid',          val: `₹${totalPaid.toLocaleString()}`,                  color: 'text-green-600' },
+            { label: 'Pending',       val: `₹${(totalPayable - totalPaid).toLocaleString()}`, color: 'text-amber-600' },
           ].map(({ label, val, color }) => (
             <div key={label} className="card py-2 px-4">
               <p className="text-xs text-gray-500">{label}</p>
@@ -384,28 +490,33 @@ export default function Payroll() {
       {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
         <div className="card p-0 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[760px]">
+            <table className="w-full text-sm min-w-[800px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {['Employee', 'Base', 'Absent days', 'Bonus', 'Deductions', 'Net payable', 'Notes', 'Status', 'Actions'].map((h) => (
+                  {['Employee', 'Period', 'Base', 'Absent', 'Bonus', 'Deductions', 'Net payable', 'Notes', 'Status', 'Actions'].map((h) => (
                     <th key={h} className="text-left px-3 py-3 text-xs font-medium text-gray-500">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {monthSalaries.length === 0 && (
-                  <tr><td colSpan={9} className="text-center py-8 text-gray-400 text-sm">
+                  <tr><td colSpan={10} className="text-center py-8 text-gray-400 text-sm">
                     No salary records for {month}. Click "Generate salaries" to create them.
                   </td></tr>
                 )}
                 {monthSalaries.map((rec) => (
                   <tr key={rec.id} className="hover:bg-gray-50">
                     <td className="px-3 py-3 font-medium text-gray-900">{rec.employeeName}</td>
+                    <td className="px-3 py-3 text-gray-500 text-xs">
+                      {rec.periodFrom && rec.periodTo
+                        ? `${rec.periodFrom} → ${rec.periodTo}`
+                        : rec.month}
+                    </td>
                     <td className="px-3 py-3 text-gray-600">₹{(rec.baseSalary ?? 0).toLocaleString()}</td>
                     <td className="px-3 py-3">
                       {(rec.absenceDays ?? 0) > 0
-                        ? <span className="badge-red">{rec.absenceDays} days</span>
-                        : <span className="text-gray-400 text-xs">—</span>}
+                        ? <span className="badge-red">{rec.absenceDays}d</span>
+                        : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-3 py-3 text-green-600">+₹{(rec.bonus ?? 0).toLocaleString()}</td>
                     <td className="px-3 py-3 text-red-500">−₹{(rec.deductions ?? 0).toLocaleString()}</td>
