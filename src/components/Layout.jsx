@@ -55,12 +55,6 @@ export default function Layout({ children }) {
           <div className="px-3 py-2 mb-1">
             <p className="text-xs font-medium text-gray-800 truncate">{profile?.name ?? 'Staff'}</p>
             <p className="text-xs text-gray-500 capitalize">{profile?.role ?? 'receptionist'}</p>
-            <button
-              onClick={() => alert('Your UID:\n' + user?.uid)}
-              className="text-xs text-blue-500 underline mt-1"
-            >
-              Show UID
-            </button>
           </div>
           <button
             onClick={handleSignOut}
