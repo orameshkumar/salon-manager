@@ -8,6 +8,37 @@ import toast from 'react-hot-toast'
 const CATEGORIES = ['Hair care', 'Skin care', 'Nail care', 'Tools & equipment', 'Consumables', 'Retail products']
 const EMPTY = { name: '', category: '', sku: '', quantity: '', reorderLevel: '5', unit: 'units', costPrice: '' }
 
+const DEFAULT_ITEMS = [
+  { name: 'Shampoo (500ml)',         category: 'Hair care',        unit: 'bottles',  quantity: 20, reorderLevel: 5,  costPrice: 250 },
+  { name: 'Conditioner (500ml)',     category: 'Hair care',        unit: 'bottles',  quantity: 15, reorderLevel: 5,  costPrice: 220 },
+  { name: 'Hair colour (tube)',      category: 'Hair care',        unit: 'tubes',    quantity: 30, reorderLevel: 10, costPrice: 180 },
+  { name: 'Hair colour developer',   category: 'Hair care',        unit: 'bottles',  quantity: 15, reorderLevel: 5,  costPrice: 150 },
+  { name: 'Hair serum',              category: 'Hair care',        unit: 'bottles',  quantity: 10, reorderLevel: 3,  costPrice: 300 },
+  { name: 'Hair mask (200g)',        category: 'Hair care',        unit: 'jars',     quantity: 10, reorderLevel: 3,  costPrice: 400 },
+  { name: 'Bleach powder',           category: 'Hair care',        unit: 'packets',  quantity: 20, reorderLevel: 5,  costPrice: 120 },
+  { name: 'Face wash',               category: 'Skin care',        unit: 'bottles',  quantity: 10, reorderLevel: 3,  costPrice: 200 },
+  { name: 'Facial cream',            category: 'Skin care',        unit: 'jars',     quantity: 10, reorderLevel: 3,  costPrice: 350 },
+  { name: 'Scrub (100g)',            category: 'Skin care',        unit: 'jars',     quantity: 8,  reorderLevel: 2,  costPrice: 280 },
+  { name: 'Sunscreen SPF50',         category: 'Skin care',        unit: 'tubes',    quantity: 8,  reorderLevel: 2,  costPrice: 320 },
+  { name: 'Wax strips',              category: 'Skin care',        unit: 'packets',  quantity: 20, reorderLevel: 5,  costPrice: 90  },
+  { name: 'Hot wax (500g)',          category: 'Skin care',        unit: 'jars',     quantity: 5,  reorderLevel: 2,  costPrice: 450 },
+  { name: 'Nail polish (assorted)',  category: 'Nail care',        unit: 'bottles',  quantity: 30, reorderLevel: 10, costPrice: 80  },
+  { name: 'Nail polish remover',     category: 'Nail care',        unit: 'bottles',  quantity: 10, reorderLevel: 3,  costPrice: 60  },
+  { name: 'Nail file',               category: 'Nail care',        unit: 'pieces',   quantity: 20, reorderLevel: 5,  costPrice: 15  },
+  { name: 'Cuticle oil',             category: 'Nail care',        unit: 'bottles',  quantity: 8,  reorderLevel: 2,  costPrice: 120 },
+  { name: 'Hair dryer',              category: 'Tools & equipment',unit: 'pieces',   quantity: 3,  reorderLevel: 1,  costPrice: 2500 },
+  { name: 'Flat iron / straightener',category: 'Tools & equipment',unit: 'pieces',   quantity: 2,  reorderLevel: 1,  costPrice: 1800 },
+  { name: 'Curling tong',            category: 'Tools & equipment',unit: 'pieces',   quantity: 2,  reorderLevel: 1,  costPrice: 1500 },
+  { name: 'Hair cutting scissors',   category: 'Tools & equipment',unit: 'pairs',    quantity: 5,  reorderLevel: 2,  costPrice: 800 },
+  { name: 'Razor / trimmer blades',  category: 'Tools & equipment',unit: 'packets',  quantity: 10, reorderLevel: 3,  costPrice: 50  },
+  { name: 'Cape / salon gown',       category: 'Tools & equipment',unit: 'pieces',   quantity: 10, reorderLevel: 3,  costPrice: 200 },
+  { name: 'Disposable gloves',       category: 'Consumables',      unit: 'boxes',    quantity: 10, reorderLevel: 3,  costPrice: 150 },
+  { name: 'Cotton pads',             category: 'Consumables',      unit: 'packs',    quantity: 15, reorderLevel: 5,  costPrice: 80  },
+  { name: 'Tissue / towels',         category: 'Consumables',      unit: 'rolls',    quantity: 20, reorderLevel: 5,  costPrice: 40  },
+  { name: 'Foil sheets',             category: 'Consumables',      unit: 'rolls',    quantity: 5,  reorderLevel: 2,  costPrice: 120 },
+  { name: 'Mixing bowl & brush',     category: 'Consumables',      unit: 'sets',     quantity: 5,  reorderLevel: 2,  costPrice: 60  },
+]
+
 export default function Inventory() {
   const { docs: items, loading } = useCollection('inventory', 'name')
   const [showForm, setShowForm]  = useState(false)
@@ -69,6 +100,23 @@ export default function Inventory() {
     }
   }
 
+  async function loadDefaults() {
+    const existingNames = new Set(items.map((i) => i.name.toLowerCase()))
+    const toAdd = DEFAULT_ITEMS.filter((d) => !existingNames.has(d.name.toLowerCase()))
+    if (!toAdd.length) { toast.success('All default items already exist'); return }
+    setSaving(true)
+    try {
+      await Promise.all(toAdd.map((d) =>
+        addDoc(collection(db, 'inventory'), { ...d, createdAt: serverTimestamp() })
+      ))
+      toast.success(`Added ${toAdd.length} default item${toAdd.length > 1 ? 's' : ''}`)
+    } catch {
+      toast.error('Failed to load defaults')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function adjustStock(id, delta) {
     const item   = items.find((i) => i.id === id)
     const newQty = Math.max(0, (item?.quantity ?? 0) + delta)
@@ -94,7 +142,12 @@ export default function Inventory() {
       <PageHeader
         title="Inventory"
         subtitle={`${items.length} items · ${lowStock.length} low stock`}
-        action={<button className="btn-primary" onClick={openAdd}>+ Add item</button>}
+        action={
+          <div className="flex gap-2">
+            <button className="btn-secondary" onClick={loadDefaults} disabled={saving}>Load defaults</button>
+            <button className="btn-primary" onClick={openAdd}>+ Add item</button>
+          </div>
+        }
       />
 
       {lowStock.length > 0 && (
