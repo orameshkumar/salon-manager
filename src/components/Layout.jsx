@@ -14,7 +14,7 @@ const NAV = [
 ]
 
 export default function Layout({ children }) {
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
 
   async function handleSignOut() {

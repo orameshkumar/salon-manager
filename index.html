@@ -6,14 +6,20 @@
     <title>Salon Manager</title>
     <script>
       (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
         var p = window.location.search.match(/[?&]p=([^&]*)/);
         if (p) {
-          var path = decodeURIComponent(p[1]);
-          var h = window.location.search.match(/[?&]h=([^&]*)/);
+          var path = p[1].replace(/~and~/g, '&');
+          var q = window.location.search.match(/[?&]q=([^&]*)/);
           window.history.replaceState(
             null, null,
-            window.location.pathname.split('/').slice(0, 2).join('/') +
-            '/' + path + (h ? '#' + decodeURIComponent(h[1]) : '')
+            window.location.pathname +
+            path + (q ? '?' + q[1].replace(/~and~/g, '&') : '') +
+            window.location.hash
           );
         }
       })();
