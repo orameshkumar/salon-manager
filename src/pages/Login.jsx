@@ -6,15 +6,39 @@ import toast from 'react-hot-toast'
 
 function LogoBig() {
   return (
-    <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="Salon Manager">
-      <polygon points="50,4 88,28 88,72 50,96 12,72 12,28" fill="none" stroke="#f9a8d4" strokeWidth="2" opacity="0.4"/>
-      <line x1="30" y1="28" x2="72" y2="72" stroke="#f9a8d4" strokeWidth="7" strokeLinecap="round"/>
-      <line x1="30" y1="72" x2="72" y2="28" stroke="#f9a8d4" strokeWidth="7" strokeLinecap="round"/>
-      <circle cx="26" cy="24" r="10" fill="none" stroke="#f9a8d4" strokeWidth="5"/>
-      <circle cx="26" cy="76" r="10" fill="none" stroke="#f9a8d4" strokeWidth="5"/>
-      <polygon points="76,22 79,29 76,36 73,29" fill="#fde68a"/>
-      <circle cx="82" cy="40" r="3.5" fill="#fce7f3" opacity="0.9"/>
-      <circle cx="78" cy="14" r="2.5" fill="#fde68a" opacity="0.75"/>
+    <svg width="88" height="88" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="Salon Manager">
+      {/* Golden hexagon — outer */}
+      <polygon points="50,3 91,27 91,73 50,97 9,73 9,27" fill="none" stroke="#d4af37" strokeWidth="2.5" opacity="0.9"/>
+      {/* Golden hexagon — inner faint */}
+      <polygon points="50,10 84,30 84,70 50,90 16,70 16,30" fill="none" stroke="#d4af37" strokeWidth="0.8" opacity="0.28"/>
+
+      {/* Blade A: ring(top-left) → tip(top-right) */}
+      <polygon points="36,20 75,16 73,22 38,32" fill="#f9a8d4"/>
+      <line x1="55" y1="37" x2="73" y2="18" stroke="#d4af37" strokeWidth="0.8" opacity="0.6"/>
+
+      {/* Blade B: ring(bottom-left) → tip(bottom-right) */}
+      <polygon points="36,80 75,84 73,78 38,68" fill="#f9a8d4"/>
+      <line x1="55" y1="63" x2="73" y2="82" stroke="#d4af37" strokeWidth="0.8" opacity="0.6"/>
+
+      {/* Pivot screw */}
+      <circle cx="50" cy="50" r="5"   fill="#d4af37"/>
+      <circle cx="50" cy="50" r="2.8" fill="#92660a"/>
+      <line x1="48" y1="50" x2="52" y2="50" stroke="#d4af37" strokeWidth="1" opacity="0.6"/>
+      <line x1="50" y1="48" x2="50" y2="52" stroke="#d4af37" strokeWidth="1" opacity="0.6"/>
+
+      {/* Handle ring 1 (top-left) */}
+      <circle cx="27" cy="23" r="12" fill="none" stroke="#f9a8d4" strokeWidth="5"/>
+      <circle cx="27" cy="23" r="6.5" fill="none" stroke="#f9a8d4" strokeWidth="2"/>
+      <path d="M33,16 Q38,13 36,20" fill="none" stroke="#f9a8d4" strokeWidth="2" strokeLinecap="round"/>
+
+      {/* Handle ring 2 (bottom-left) */}
+      <circle cx="27" cy="77" r="12" fill="none" stroke="#f9a8d4" strokeWidth="5"/>
+      <circle cx="27" cy="77" r="6.5" fill="none" stroke="#f9a8d4" strokeWidth="2"/>
+
+      {/* Sparkle */}
+      <polygon points="80,16 83,23 80,30 77,23" fill="#d4af37"/>
+      <circle cx="86" cy="35" r="2.5" fill="#fce7f3" opacity="0.8"/>
+      <circle cx="79" cy="10" r="1.6" fill="#fde68a" opacity="0.7"/>
     </svg>
   )
 }

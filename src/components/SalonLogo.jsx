@@ -1,50 +1,61 @@
 export default function SalonLogo({ size = 32, className = '' }) {
-  const s = size
-  const cx = s / 2
-  const cy = s / 2
-  const r  = s * 0.44   // diamond hex radius
-  const sc = s * 0.38   // scissors scale
-
   return (
     <svg
-      width={s}
-      height={s}
+      width={size}
+      height={size}
       viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-label="Salon Manager logo"
     >
-      {/* Diamond hexagon outline */}
+      {/* ── Golden hexagon frame ── */}
       <polygon
-        points="50,4 88,28 88,72 50,96 12,72 12,28"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        opacity="0.25"
+        points="50,3 91,27 91,73 50,97 9,73 9,27"
+        fill="none" stroke="#d4af37" strokeWidth="2.5" opacity="0.9"
+      />
+      <polygon
+        points="50,10 84,30 84,70 50,90 16,70 16,30"
+        fill="none" stroke="#d4af37" strokeWidth="0.8" opacity="0.28"
       />
 
-      {/* Scissors blade 1 */}
-      <line x1="30" y1="28" x2="72" y2="72" stroke="url(#lg1)" strokeWidth="7" strokeLinecap="round"/>
-      {/* Scissors blade 2 */}
-      <line x1="30" y1="72" x2="72" y2="28" stroke="url(#lg1)" strokeWidth="7" strokeLinecap="round"/>
+      {/* ── Blade A: handle-ring top-left → tip top-right ── */}
+      {/* Spine (back edge) and cutting edge form a tapered wedge */}
+      <polygon
+        points="36,20 75,16 73,22 38,32"
+        fill="currentColor" opacity="0.95"
+      />
+      {/* Blade A shine */}
+      <line x1="55" y1="37" x2="73" y2="18" stroke="#d4af37" strokeWidth="0.8" opacity="0.55"/>
 
-      {/* Handle rings */}
-      <circle cx="26" cy="24" r="10" fill="none" stroke="url(#lg1)" strokeWidth="5"/>
-      <circle cx="26" cy="76" r="10" fill="none" stroke="url(#lg1)" strokeWidth="5"/>
+      {/* ── Blade B: handle-ring bottom-left → tip bottom-right ── */}
+      <polygon
+        points="36,80 75,84 73,78 38,68"
+        fill="currentColor" opacity="0.95"
+      />
+      {/* Blade B shine */}
+      <line x1="55" y1="63" x2="73" y2="82" stroke="#d4af37" strokeWidth="0.8" opacity="0.55"/>
 
-      {/* Gold diamond sparkle */}
-      <polygon points="76,22 79,29 76,36 73,29" fill="#d4af37"/>
+      {/* ── Pivot screw ── */}
+      <circle cx="50" cy="50" r="5"   fill="#d4af37"/>
+      <circle cx="50" cy="50" r="2.8" fill="#92660a"/>
+      {/* screw cross slot */}
+      <line x1="48" y1="50" x2="52" y2="50" stroke="#d4af37" strokeWidth="1" opacity="0.6"/>
+      <line x1="50" y1="48" x2="50" y2="52" stroke="#d4af37" strokeWidth="1" opacity="0.6"/>
 
-      {/* Pink sparkle dots */}
-      <circle cx="82" cy="40" r="3.5" fill="#f472b6" opacity="0.9"/>
-      <circle cx="78" cy="14" r="2.5" fill="#f9d76e" opacity="0.75"/>
+      {/* ── Handle ring 1 (top-left) ── */}
+      <circle cx="27" cy="23" r="12" fill="none" stroke="currentColor" strokeWidth="5"/>
+      <circle cx="27" cy="23" r="6.5" fill="none" stroke="currentColor" strokeWidth="2"/>
+      {/* thumb rest notch */}
+      <path d="M33,16 Q38,13 36,20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
 
-      <defs>
-        <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stopColor="#f472b6"/>
-          <stop offset="100%" stopColor="#be185d"/>
-        </linearGradient>
-      </defs>
+      {/* ── Handle ring 2 (bottom-left) ── */}
+      <circle cx="27" cy="77" r="12" fill="none" stroke="currentColor" strokeWidth="5"/>
+      <circle cx="27" cy="77" r="6.5" fill="none" stroke="currentColor" strokeWidth="2"/>
+
+      {/* ── Gold sparkle diamond ── */}
+      <polygon points="80,16 83,23 80,30 77,23" fill="#d4af37"/>
+      <circle cx="86" cy="35" r="2.5" fill="currentColor" opacity="0.65"/>
+      <circle cx="79" cy="10" r="1.6" fill="#fde68a" opacity="0.7"/>
     </svg>
   )
 }
