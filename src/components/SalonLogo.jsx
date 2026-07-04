@@ -8,51 +8,49 @@ export default function SalonLogo({ size = 32, className = '' }) {
       className={className}
       aria-label="Salon Manager logo"
     >
-      {/* Golden hexagon frame */}
+      {/* Golden hexagon frame — outer */}
       <polygon
         points="50,3 91,27 91,73 50,97 9,73 9,27"
         fill="none" stroke="#d4af37" strokeWidth="2.5" opacity="0.9"
       />
+      {/* Golden hexagon frame — inner faint */}
       <polygon
         points="50,10 84,30 84,70 50,90 16,70 16,30"
         fill="none" stroke="#d4af37" strokeWidth="0.8" opacity="0.28"
       />
 
       {/*
-        Classic scissors icon:
-          Upper blade: from upper ring (cx=22,cy=32) through pivot (45,50) to tip (84,34)
-          Lower blade: from lower ring (cx=22,cy=68) through pivot (45,50) to tip (84,66)
-          Rings are solid-stroke circles, pivot visible as gold dot.
+        Scissors: two straight blades at ~30° opening.
+        Handle rings at (20,32) and (20,68).
+        Blades run from rings to tips at (86,40) and (86,60).
+        Pivot screw at 1/4 of blade length from handle (~x=36).
       */}
 
-      {/* Upper blade */}
-      <line x1="30" y1="37" x2="84" y2="34"
-        stroke="currentColor" strokeWidth="6" strokeLinecap="round"/>
-      {/* Upper blade — handle shank to ring */}
-      <line x1="22" y1="32" x2="45" y2="47"
-        stroke="currentColor" strokeWidth="6" strokeLinecap="round"/>
+      {/*
+        Blades cross (X pattern): upper blade from top ring → lower-right tip,
+        lower blade from bottom ring → upper-right tip.
+        Natural crossing at ~1/4 from the handle side.
+      */}
+      {/* Upper blade: top-left ring → lower-right tip */}
+      <line x1="19" y1="38" x2="86" y2="82"
+        stroke="currentColor" strokeWidth="8.5" strokeLinecap="round"/>
+      {/* Lower blade: bottom-left ring → upper-right tip */}
+      <line x1="19" y1="62" x2="86" y2="18"
+        stroke="currentColor" strokeWidth="8.5" strokeLinecap="round"/>
 
-      {/* Lower blade */}
-      <line x1="30" y1="63" x2="84" y2="66"
-        stroke="currentColor" strokeWidth="6" strokeLinecap="round"/>
-      {/* Lower blade — handle shank to ring */}
-      <line x1="22" y1="68" x2="45" y2="53"
-        stroke="currentColor" strokeWidth="6" strokeLinecap="round"/>
+      {/* Pivot screw at crossing ~(35, 50) = 1/4 from handle */}
+      <circle cx="35" cy="50" r="5" fill="#d4af37"/>
+      <circle cx="35" cy="50" r="2.4" fill="#92660a"/>
 
-      {/* Pivot screw */}
-      <circle cx="45" cy="50" r="4.5" fill="#d4af37"/>
-      <circle cx="45" cy="50" r="2.2" fill="#92660a"/>
+      {/* Handle ring — upper */}
+      <circle cx="19" cy="38" r="11" fill="none" stroke="currentColor" strokeWidth="5.5"/>
+      {/* Handle ring — lower */}
+      <circle cx="19" cy="62" r="11" fill="none" stroke="currentColor" strokeWidth="5.5"/>
 
-      {/* Handle ring 1 — upper */}
-      <circle cx="20" cy="31" r="11" fill="none" stroke="currentColor" strokeWidth="5.5"/>
-
-      {/* Handle ring 2 — lower */}
-      <circle cx="20" cy="69" r="11" fill="none" stroke="currentColor" strokeWidth="5.5"/>
-
-      {/* Gold sparkle dots */}
-      <circle cx="87" cy="28" r="3.5" fill="#d4af37"/>
-      <circle cx="90" cy="40" r="2"   fill="#d4af37" opacity="0.7"/>
-      <circle cx="84" cy="22" r="1.5" fill="#fde68a" opacity="0.8"/>
+      {/* Gold sparkle dots near blade tips */}
+      <circle cx="88" cy="32" r="3.5" fill="#d4af37"/>
+      <circle cx="91" cy="43" r="2"   fill="#d4af37" opacity="0.7"/>
+      <circle cx="85" cy="26" r="1.5" fill="#fde68a" opacity="0.8"/>
     </svg>
   )
 }

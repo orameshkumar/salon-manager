@@ -7,30 +7,17 @@ import toast from 'react-hot-toast'
 function LogoBig() {
   return (
     <svg width="88" height="88" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="Salon Manager">
-      {/* Golden hexagon — outer */}
       <polygon points="50,3 91,27 91,73 50,97 9,73 9,27" fill="none" stroke="#d4af37" strokeWidth="2.5" opacity="0.9"/>
-      {/* Golden hexagon — inner faint */}
       <polygon points="50,10 84,30 84,70 50,90 16,70 16,30" fill="none" stroke="#d4af37" strokeWidth="0.8" opacity="0.28"/>
-
-      {/* Upper blade */}
-      <line x1="30" y1="37" x2="84" y2="34" stroke="#f9a8d4" strokeWidth="6" strokeLinecap="round"/>
-      <line x1="22" y1="32" x2="45" y2="47" stroke="#f9a8d4" strokeWidth="6" strokeLinecap="round"/>
-      {/* Lower blade */}
-      <line x1="30" y1="63" x2="84" y2="66" stroke="#f9a8d4" strokeWidth="6" strokeLinecap="round"/>
-      <line x1="22" y1="68" x2="45" y2="53" stroke="#f9a8d4" strokeWidth="6" strokeLinecap="round"/>
-
-      {/* Pivot screw */}
-      <circle cx="45" cy="50" r="4.5" fill="#d4af37"/>
-      <circle cx="45" cy="50" r="2.2" fill="#92660a"/>
-
-      {/* Handle rings */}
-      <circle cx="20" cy="31" r="11" fill="none" stroke="#f9a8d4" strokeWidth="5.5"/>
-      <circle cx="20" cy="69" r="11" fill="none" stroke="#f9a8d4" strokeWidth="5.5"/>
-
-      {/* Gold sparkle dots */}
-      <circle cx="87" cy="28" r="3.5" fill="#d4af37"/>
-      <circle cx="90" cy="40" r="2"   fill="#d4af37" opacity="0.7"/>
-      <circle cx="84" cy="22" r="1.5" fill="#fde68a" opacity="0.8"/>
+      <line x1="19" y1="38" x2="86" y2="82" stroke="#f9a8d4" strokeWidth="8.5" strokeLinecap="round"/>
+      <line x1="19" y1="62" x2="86" y2="18" stroke="#f9a8d4" strokeWidth="8.5" strokeLinecap="round"/>
+      <circle cx="35" cy="50" r="5" fill="#d4af37"/>
+      <circle cx="35" cy="50" r="2.4" fill="#92660a"/>
+      <circle cx="19" cy="38" r="11" fill="none" stroke="#f9a8d4" strokeWidth="5.5"/>
+      <circle cx="19" cy="62" r="11" fill="none" stroke="#f9a8d4" strokeWidth="5.5"/>
+      <circle cx="88" cy="32" r="3.5" fill="#d4af37"/>
+      <circle cx="91" cy="43" r="2"   fill="#d4af37" opacity="0.7"/>
+      <circle cx="85" cy="26" r="1.5" fill="#fde68a" opacity="0.8"/>
     </svg>
   )
 }
