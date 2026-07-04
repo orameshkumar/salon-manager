@@ -12,22 +12,25 @@ function LogoBig() {
       {/* Golden hexagon — inner faint */}
       <polygon points="50,10 84,30 84,70 50,90 16,70 16,30" fill="none" stroke="#d4af37" strokeWidth="0.8" opacity="0.28"/>
 
-      {/* Scissors: bent at pivot, 1/4 from handle, 30° opening */}
-      <path d="M20,31 L33,50 L82,38" fill="none" stroke="#f9a8d4" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M20,69 L33,50 L82,62" fill="none" stroke="#f9a8d4" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Upper blade */}
+      <line x1="30" y1="37" x2="84" y2="34" stroke="#f9a8d4" strokeWidth="6" strokeLinecap="round"/>
+      <line x1="22" y1="32" x2="45" y2="47" stroke="#f9a8d4" strokeWidth="6" strokeLinecap="round"/>
+      {/* Lower blade */}
+      <line x1="30" y1="63" x2="84" y2="66" stroke="#f9a8d4" strokeWidth="6" strokeLinecap="round"/>
+      <line x1="22" y1="68" x2="45" y2="53" stroke="#f9a8d4" strokeWidth="6" strokeLinecap="round"/>
 
       {/* Pivot screw */}
-      <circle cx="33" cy="50" r="4.5" fill="#d4af37"/>
-      <circle cx="33" cy="50" r="2.5" fill="#92660a"/>
+      <circle cx="45" cy="50" r="4.5" fill="#d4af37"/>
+      <circle cx="45" cy="50" r="2.2" fill="#92660a"/>
 
       {/* Handle rings */}
-      <circle cx="18" cy="28" r="9" fill="none" stroke="#f9a8d4" strokeWidth="5"/>
-      <circle cx="18" cy="72" r="9" fill="none" stroke="#f9a8d4" strokeWidth="5"/>
+      <circle cx="20" cy="31" r="11" fill="none" stroke="#f9a8d4" strokeWidth="5.5"/>
+      <circle cx="20" cy="69" r="11" fill="none" stroke="#f9a8d4" strokeWidth="5.5"/>
 
       {/* Gold sparkle dots */}
-      <circle cx="86" cy="33" r="3.5" fill="#d4af37"/>
-      <circle cx="89" cy="44" r="2.2" fill="#d4af37" opacity="0.7"/>
-      <circle cx="83" cy="26" r="1.5" fill="#fde68a" opacity="0.8"/>
+      <circle cx="87" cy="28" r="3.5" fill="#d4af37"/>
+      <circle cx="90" cy="40" r="2"   fill="#d4af37" opacity="0.7"/>
+      <circle cx="84" cy="22" r="1.5" fill="#fde68a" opacity="0.8"/>
     </svg>
   )
 }
