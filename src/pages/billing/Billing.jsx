@@ -40,15 +40,22 @@ export default function Billing() {
   const [discount, setDiscount]         = useState(0)
   const [redeemPoints, setRedeemPoints] = useState(0)
   const [paymentMode, setPaymentMode]   = useState('UPI')
+  const [amountPaid, setAmountPaid]     = useState('')
   const [saving, setSaving]             = useState(false)
   const [deleting, setDeleting]         = useState(null)
+  const [collectDoc, setCollectDoc]     = useState(null)
+  const [collectAmount, setCollectAmount] = useState('')
+  const [collectMode, setCollectMode]   = useState('UPI')
+  const [collectSaving, setCollectSaving] = useState(false)
 
-  const subtotal      = selectedServices.reduce((s, i) => s + i.price, 0)
-  const redeemDiscount = redeemPoints * loyalty.redeemValue
-  const total         = Math.max(0, subtotal - Number(discount) - redeemDiscount)
-  const pointsEarned  = calcPointsEarned(total, loyalty)
-  const maxRedeemable = calcMaxRedemption(subtotal, customerPoints, loyalty)
-  const canRedeem     = customerPoints >= loyalty.minPointsRedeem
+  const subtotal         = selectedServices.reduce((s, i) => s + i.price, 0)
+  const redeemDiscount   = redeemPoints * loyalty.redeemValue
+  const total            = Math.max(0, subtotal - Number(discount) - redeemDiscount)
+  const effectiveAmtPaid = amountPaid === '' ? total : Math.max(0, Number(amountPaid))
+  const balanceDue       = Math.max(0, total - effectiveAmtPaid)
+  const pointsEarned     = calcPointsEarned(total, loyalty)
+  const maxRedeemable    = calcMaxRedemption(subtotal, customerPoints, loyalty)
+  const canRedeem        = customerPoints >= loyalty.minPointsRedeem
 
   // Staff commission: use priority-chain rules (staff override → per-service → category default)
   const staffCommission = calcTotalCommission(selectedServices, staffId, commissionRules)
@@ -84,7 +91,8 @@ export default function Billing() {
     setStaffName(inv.staffName || '')
     setDiscount(inv.discount ?? 0)
     setRedeemPoints(inv.redeemPoints ?? 0)
-    setPaymentMode(inv.paymentMode || 'Cash')
+    setPaymentMode(inv.paymentMode || 'UPI')
+    setAmountPaid(inv.amountPaid != null ? String(inv.amountPaid) : '')
     setShowForm(true)
   }
 
@@ -99,6 +107,7 @@ export default function Billing() {
     setDiscount(0)
     setRedeemPoints(0)
     setPaymentMode('UPI')
+    setAmountPaid('')
     setShowForm(false)
   }
 
@@ -141,9 +150,11 @@ export default function Billing() {
         redeemPoints,
         redeemDiscount,
         total,
+        amountPaid:      effectiveAmtPaid,
+        balanceDue,
         pointsEarned,
         paymentMode,
-        status:          'paid',
+        status:          balanceDue > 0 ? 'partial' : 'paid',
       }
 
       if (editDoc) {
@@ -173,6 +184,31 @@ export default function Billing() {
       toast.error('Failed to save invoice')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleCollect(e) {
+    e.preventDefault()
+    const collected = Number(collectAmount)
+    if (!collected || collected <= 0) { toast.error('Enter a valid amount'); return }
+    setCollectSaving(true)
+    try {
+      const newAmountPaid = (collectDoc.amountPaid ?? 0) + collected
+      const newBalance    = Math.max(0, collectDoc.total - newAmountPaid)
+      await updateDoc(doc(db, 'invoices', collectDoc.id), {
+        amountPaid:  newAmountPaid,
+        balanceDue:  newBalance,
+        status:      newBalance <= 0 ? 'paid' : 'partial',
+        paymentMode: collectMode,
+        updatedAt:   serverTimestamp(),
+      })
+      toast.success(newBalance <= 0 ? 'Payment complete — invoice marked as paid' : `₹${collected} collected · ₹${newBalance} still pending`)
+      setCollectDoc(null)
+      setCollectAmount('')
+    } catch {
+      toast.error('Failed to record payment')
+    } finally {
+      setCollectSaving(false)
     }
   }
 
@@ -302,6 +338,17 @@ export default function Billing() {
                   onChange={(e) => setDiscount(e.target.value)} />
               </div>
               <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Amount collected (₹) <span className="text-gray-400 font-normal">— leave blank for full payment</span>
+                </label>
+                <input className="input" type="number" min="0" max={total} placeholder={`₹${total} (full)`}
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(e.target.value)} />
+                {balanceDue > 0 && (
+                  <p className="text-xs text-red-600 font-medium mt-1">Balance due: ₹{balanceDue}</p>
+                )}
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Payment mode</label>
                 <select className="input" value={paymentMode}
                   onChange={(e) => setPaymentMode(e.target.value)}>
@@ -325,6 +372,12 @@ export default function Billing() {
                 {Number(discount) > 0 && <p className="text-xs text-gray-500">Discount: −₹{discount}</p>}
                 {redeemPoints > 0 && <p className="text-xs text-green-600">Points: −₹{redeemDiscount} ({redeemPoints} pts)</p>}
                 <p className="text-base font-semibold text-brand-700">Total: ₹{total}</p>
+                {balanceDue > 0 && (
+                  <>
+                    <p className="text-xs text-gray-500 mt-1">Collected: ₹{effectiveAmtPaid}</p>
+                    <p className="text-xs font-semibold text-red-600">Balance due: ₹{balanceDue}</p>
+                  </>
+                )}
                 <p className="text-xs text-amber-600 mt-1">+{pointsEarned} pts will be earned</p>
                 {staffId && staffCommission > 0 && (
                   <p className="text-xs text-purple-600 mt-1 border-t border-purple-100 pt-1">
@@ -347,6 +400,36 @@ export default function Billing() {
         </div>
       )}
 
+      {/* Collect balance panel */}
+      {collectDoc && (
+        <div className="card mb-6 border-red-200 bg-red-50">
+          <p className="text-sm font-medium text-gray-800 mb-1">Collect balance — {collectDoc.customerName}</p>
+          <p className="text-xs text-gray-500 mb-4">
+            Total: ₹{collectDoc.total} · Collected so far: ₹{collectDoc.amountPaid ?? 0} · <span className="font-semibold text-red-600">Balance: ₹{collectDoc.balanceDue ?? collectDoc.total}</span>
+          </p>
+          <form onSubmit={handleCollect} className="flex flex-wrap items-end gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Amount received (₹)</label>
+              <input className="input w-40" type="number" min="1" max={collectDoc.balanceDue ?? collectDoc.total}
+                placeholder={`up to ₹${collectDoc.balanceDue ?? collectDoc.total}`}
+                value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} autoFocus />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Payment mode</label>
+              <select className="input w-32" value={collectMode} onChange={(e) => setCollectMode(e.target.value)}>
+                {PAYMENT_MODES.map((m) => <option key={m}>{m}</option>)}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" className="btn-secondary" onClick={() => { setCollectDoc(null); setCollectAmount('') }}>Cancel</button>
+              <button type="submit" className="btn-primary" disabled={collectSaving}>
+                {collectSaving ? 'Saving…' : 'Record payment'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Invoices table */}
       {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
         <div className="card p-0 overflow-hidden">
@@ -354,17 +437,17 @@ export default function Billing() {
           <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Customer', 'Services', 'Staff', 'Commission', 'Subtotal', 'Discount', 'Total', 'Pts Earned', 'Payment', 'Date', 'Actions'].map((h) => (
+                {['Customer', 'Services', 'Staff', 'Commission', 'Subtotal', 'Discount', 'Total', 'Pts Earned', 'Payment', 'Status', 'Date', 'Actions'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {invoices.length === 0 && (
-                <tr><td colSpan={11} className="text-center py-8 text-gray-400 text-sm">No invoices yet</td></tr>
+                <tr><td colSpan={12} className="text-center py-8 text-gray-400 text-sm">No invoices yet</td></tr>
               )}
               {invoices.map((inv) => (
-                <tr key={inv.id} className="hover:bg-gray-50">
+                <tr key={inv.id} className={`hover:bg-gray-50 ${inv.status === 'partial' ? 'bg-red-50' : ''}`}>
                   <td className="px-4 py-3 font-medium text-gray-900">{inv.customerName}</td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{inv.services?.map((s) => s.name).join(', ')}</td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{inv.staffName || '—'}</td>
@@ -376,11 +459,22 @@ export default function Billing() {
                   <td className="px-4 py-3 font-semibold text-gray-900">₹{inv.total}</td>
                   <td className="px-4 py-3 text-amber-600 text-xs font-medium">+{inv.pointsEarned ?? 0} pts</td>
                   <td className="px-4 py-3"><span className="badge-blue">{inv.paymentMode}</span></td>
+                  <td className="px-4 py-3">
+                    {inv.status === 'partial'
+                      ? <span className="text-xs font-semibold text-red-600">Balance ₹{inv.balanceDue}</span>
+                      : <span className="text-xs font-medium text-green-600">Paid</span>}
+                  </td>
                   <td className="px-4 py-3 text-gray-600 text-xs">
                     {inv.createdAt?.toDate ? format(inv.createdAt.toDate(), 'dd MMM, h:mm a') : '—'}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
+                      {inv.status === 'partial' && (
+                        <button className="text-xs text-green-600 hover:underline font-medium"
+                          onClick={() => { setCollectDoc(inv); setCollectAmount(''); setCollectMode('UPI') }}>
+                          Collect
+                        </button>
+                      )}
                       <button className="text-xs text-blue-600 hover:underline" onClick={() => openEdit(inv)}>Edit</button>
                       <button
                         className="text-xs text-red-600 hover:underline disabled:opacity-50"
