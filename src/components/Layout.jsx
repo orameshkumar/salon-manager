@@ -5,6 +5,7 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
 import { useTheme, THEMES } from '../context/ThemeContext'
+import SalonLogo from './SalonLogo'
 
 const NAV = [
   { to: '/',             label: 'Dashboard',    icon: '⊞' },
@@ -42,7 +43,10 @@ export default function Layout({ children }) {
     <>
       <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
         <div>
-          <h1 className="text-base font-semibold text-brand-700">✂ Salon Manager</h1>
+          <div className="flex items-center gap-2">
+            <SalonLogo size={28} className="text-brand-600 flex-shrink-0" />
+            <h1 className="text-base font-semibold text-brand-700">Salon Manager</h1>
+          </div>
           <p className="text-xs text-gray-500 mt-0.5">{profile?.branchName ?? 'Main Branch'}</p>
         </div>
         {/* Close button — mobile only */}
@@ -135,7 +139,8 @@ export default function Layout({ children }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="text-sm font-semibold text-brand-700">✂ Salon Manager</span>
+          <SalonLogo size={22} className="text-brand-600 flex-shrink-0" />
+          <span className="text-sm font-semibold text-brand-700">Salon Manager</span>
         </header>
 
         <main className="flex-1 overflow-y-auto">
