@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Salon Manager</title>
+    <script>
+      (function() {
+        var p = window.location.search.match(/[?&]p=([^&]*)/);
+        if (p) {
+          var path = decodeURIComponent(p[1]);
+          var h = window.location.search.match(/[?&]h=([^&]*)/);
+          window.history.replaceState(
+            null, null,
+            window.location.pathname.split('/').slice(0, 2).join('/') +
+            '/' + path + (h ? '#' + decodeURIComponent(h[1]) : '')
+          );
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
