@@ -228,7 +228,9 @@ export default function Services() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400 text-sm">No services found</td></tr>
+                <tr><td colSpan={7} className="text-center py-8 text-gray-400 text-sm">
+                  No services found — add one above or switch to &quot;All&quot;
+                </td></tr>
               )}
               {filtered.map((s) => (
                 <tr key={s.id} className="hover:bg-gray-50">

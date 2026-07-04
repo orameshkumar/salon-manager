@@ -421,13 +421,9 @@ export default function CommissionRules() {
         </ol>
       </div>
 
-      {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
-        <>
-          <CategoryRules rules={rules} employees={employees} services={services} />
-          <StaffOverrides rules={rules} employees={employees} services={services} />
-          <MonthlyTargets rules={rules} employees={employees} />
-        </>
-      )}
+      <CategoryRules rules={rules} employees={employees} services={services} />
+      <StaffOverrides rules={rules} employees={employees} services={services} />
+      <MonthlyTargets rules={rules} employees={employees} />
     </div>
   )
 }

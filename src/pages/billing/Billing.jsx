@@ -21,24 +21,12 @@ export default function Billing() {
   const activeStaff = employees.filter((e) => e.active !== false)
 
   // Build service list with commission info from Firestore
-  const SERVICE_LIST = services.length > 0
-    ? services.map((s) => ({
-        name: s.name, price: s.price ?? 0,
-        category: s.category ?? '',
-        commissionType: s.commissionType ?? 'none',
-        commissionValue: s.commissionValue ?? 0,
-      }))
-    : [
-        { name: 'Haircut', price: 300, commissionType: 'none', commissionValue: 0 },
-        { name: 'Hair colour', price: 1200, commissionType: 'none', commissionValue: 0 },
-        { name: 'Blowdry', price: 400, commissionType: 'none', commissionValue: 0 },
-        { name: 'Facial', price: 800, commissionType: 'none', commissionValue: 0 },
-        { name: 'Manicure', price: 500, commissionType: 'none', commissionValue: 0 },
-        { name: 'Pedicure', price: 600, commissionType: 'none', commissionValue: 0 },
-        { name: 'Threading', price: 100, commissionType: 'none', commissionValue: 0 },
-        { name: 'Waxing', price: 700, commissionType: 'none', commissionValue: 0 },
-        { name: 'Massage', price: 1500, commissionType: 'none', commissionValue: 0 },
-      ]
+  const SERVICE_LIST = services.map((s) => ({
+    name: s.name, price: s.price ?? 0,
+    category: s.category ?? '',
+    commissionType: s.commissionType ?? 'none',
+    commissionValue: s.commissionValue ?? 0,
+  }))
 
   const [showForm, setShowForm]         = useState(false)
   const [editDoc,  setEditDoc]          = useState(null)
@@ -331,7 +319,7 @@ export default function Billing() {
                   </p>
                 )}
                 {staffId && staffCommission === 0 && (
-                  <p className="text-xs text-gray-400 mt-1">No commission configured for selected services</p>
+                  <p className="text-xs text-gray-400 mt-1">No commission configured — set rates in Services or Commission Rules</p>
                 )}
               </div>
             </div>

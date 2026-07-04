@@ -34,9 +34,7 @@ export default function Appointments() {
   const stylists = form.service
     ? allStaff.filter((e) => !e.services?.length || e.services.includes(form.service))
     : allStaff
-  const serviceNames = services.length > 0
-    ? services.map((s) => s.name)
-    : ['Haircut', 'Hair colour', 'Blowdry', 'Facial', 'Manicure', 'Pedicure', 'Threading', 'Waxing', 'Massage']
+  const serviceNames = services.map((s) => s.name)
 
   const filtered = appointments.filter((a) => filter === 'all' ? true : a.status === filter)
 
@@ -190,11 +188,13 @@ export default function Appointments() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Service *</label>
-              <select className="input" required value={form.service}
-                onChange={(e) => setForm({ ...form, service: e.target.value, stylist: '' })}>
-                <option value="">Select service</option>
-                {serviceNames.map((s) => <option key={s}>{s}</option>)}
-              </select>
+              {serviceNames.length === 0
+                ? <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">No services configured — go to Services page to add some.</p>
+                : <select className="input" required value={form.service}
+                    onChange={(e) => setForm({ ...form, service: e.target.value, stylist: '' })}>
+                    <option value="">Select service</option>
+                    {serviceNames.map((s) => <option key={s}>{s}</option>)}
+                  </select>}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">

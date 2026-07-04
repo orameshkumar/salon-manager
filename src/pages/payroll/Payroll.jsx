@@ -409,7 +409,7 @@ export default function Payroll() {
         title="Payroll"
         subtitle={`${month} · ₹${totalPaid.toLocaleString()} paid of ₹${totalPayable.toLocaleString()}`}
         action={
-          <button className="btn-primary" onClick={() => setShowModal(true)} disabled={generating}>
+          <button className="btn-primary" onClick={() => setShowModal(true)} disabled={generating || loading}>
             {generating ? 'Generating…' : 'Generate salaries'}
           </button>
         }

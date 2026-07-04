@@ -28,7 +28,7 @@ export default function Dashboard() {
         getDocs(query(collection(db, 'appointments'), where('date', '>=', start), where('date', '<=', end))),
         getDocs(query(collection(db, 'invoices'),     where('createdAt', '>=', start), where('createdAt', '<=', end))),
         getDocs(query(collection(db, 'customers'),    where('createdAt', '>=', start), where('createdAt', '<=', end))),
-        getDocs(query(collection(db, 'inventory'),    where('quantity', '<=', 5))),
+        getDocs(collection(db, 'inventory')),
       ])
 
       const revenue = invoiceSnap.docs.reduce((sum, d) => sum + (d.data().total ?? 0), 0)
@@ -40,7 +40,11 @@ export default function Dashboard() {
           return at - bt
         })
 
-      setStats({ appointments: apptSnap.size, revenue, newCustomers: custSnap.size, lowStock: stockSnap.size })
+      const lowStock = stockSnap.docs.filter((d) => {
+        const item = d.data()
+        return (item.quantity ?? 0) <= (item.reorderLevel ?? 5)
+      }).length
+      setStats({ appointments: apptSnap.size, revenue, newCustomers: custSnap.size, lowStock })
       setAppointments(appts)
     }
     loadStats()
@@ -55,7 +59,7 @@ export default function Dashboard() {
         <StatCard label="Today's appointments" value={stats.appointments} color="brand" />
         <StatCard label="Today's revenue"       value={`₹${stats.revenue.toLocaleString()}`} color="green" />
         <StatCard label="New customers"         value={stats.newCustomers} color="blue" />
-        <StatCard label="Low stock alerts"      value={stats.lowStock} color="amber" sub="items below 5 units" />
+        <StatCard label="Low stock alerts"      value={stats.lowStock} color="amber" sub="items below reorder level" />
       </div>
 
       {/* Today's schedule */}

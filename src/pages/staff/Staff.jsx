@@ -52,7 +52,7 @@ async function createAuthUser(email, password) {
 }
 
 export default function Staff() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
   const { docs: staff, loading } = useCollection('employees', 'name')
   const { docs: serviceList }    = useCollection('services', 'name')
 
@@ -346,6 +346,13 @@ export default function Staff() {
             )}
 
             {/* Salary section — admin/owner only */}
+            {!isOwnerOrManager && editDoc && (
+              <div className="col-span-2">
+                <p className="text-xs text-gray-400 border-t border-gray-200 pt-3 mt-1">
+                  Base salary and compensation are managed by an admin — contact your owner or manager to update them.
+                </p>
+              </div>
+            )}
             {isOwnerOrManager && (
               <div className="col-span-2">
                 <div className="border-t border-gray-200 pt-4 mt-2">
@@ -444,29 +451,33 @@ export default function Staff() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {isOwnerOrManager && (
-                      <div className="flex gap-2">
+                    <div className="flex gap-2">
+                      {(isOwnerOrManager || member.id === user?.uid) && (
                         <button
                           className="text-xs text-blue-600 hover:underline"
                           onClick={() => openEdit(member)}
                         >
                           Edit
                         </button>
-                        <button
-                          className="text-xs text-amber-600 hover:underline"
-                          onClick={() => handleToggleActive(member)}
-                        >
-                          {member.active === false ? 'Activate' : 'Deactivate'}
-                        </button>
-                        <button
-                          className="text-xs text-red-600 hover:underline disabled:opacity-50"
-                          disabled={deleting === member.id}
-                          onClick={() => handleDelete(member)}
-                        >
-                          {deleting === member.id ? '…' : 'Delete'}
-                        </button>
-                      </div>
-                    )}
+                      )}
+                      {isOwnerOrManager && (
+                        <>
+                          <button
+                            className="text-xs text-amber-600 hover:underline"
+                            onClick={() => handleToggleActive(member)}
+                          >
+                            {member.active === false ? 'Activate' : 'Deactivate'}
+                          </button>
+                          <button
+                            className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                            disabled={deleting === member.id}
+                            onClick={() => handleDelete(member)}
+                          >
+                            {deleting === member.id ? '…' : 'Delete'}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
