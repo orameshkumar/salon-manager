@@ -111,7 +111,9 @@ function GenerateModal({ activeStaff, existingIds, month, onConfirm, onClose }) 
 
             {eligible.length === 0 ? (
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                All active staff already have salary records for {month}.
+                {activeStaff.length === 0
+                  ? 'No staff have a base salary configured. Go to Staff → edit each member → set Base salary.'
+                  : `All active staff already have salary records for ${month}.`}
               </p>
             ) : (
               <div className="border border-gray-200 rounded-lg overflow-hidden">
