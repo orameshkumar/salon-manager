@@ -8,6 +8,18 @@ import toast from 'react-hot-toast'
 const CATEGORIES = ['Hair', 'Skin', 'Nails', 'Body', 'Other']
 const EMPTY = { name: '', category: '', price: '', duration: '', description: '' }
 
+const DEFAULT_SERVICES = [
+  { name: 'Haircut',     category: 'Hair', price: 300,  duration: 30,  description: 'Basic haircut and styling' },
+  { name: 'Hair colour', category: 'Hair', price: 1200, duration: 90,  description: 'Full hair colouring' },
+  { name: 'Blowdry',    category: 'Hair', price: 400,  duration: 30,  description: 'Blowdry and finish' },
+  { name: 'Facial',     category: 'Skin', price: 800,  duration: 60,  description: 'Deep cleansing facial' },
+  { name: 'Manicure',   category: 'Nails', price: 500, duration: 45,  description: 'Nail shaping and polish' },
+  { name: 'Pedicure',   category: 'Nails', price: 600, duration: 45,  description: 'Foot care and nail polish' },
+  { name: 'Threading',  category: 'Skin', price: 100,  duration: 15,  description: 'Eyebrow threading' },
+  { name: 'Waxing',     category: 'Body', price: 700,  duration: 45,  description: 'Full body waxing' },
+  { name: 'Massage',    category: 'Body', price: 1500, duration: 60,  description: 'Relaxing body massage' },
+]
+
 export default function Services() {
   const { docs: services, loading } = useCollection('services', 'name')
   const [showForm, setShowForm] = useState(false)
@@ -16,6 +28,24 @@ export default function Services() {
   const [saving, setSaving]     = useState(false)
   const [deleting, setDeleting] = useState(null)
   const [filter, setFilter]     = useState('all')
+  const [seeding, setSeeding]   = useState(false)
+
+  async function loadDefaults() {
+    if (!window.confirm('This will add 9 default services. Continue?')) return
+    setSeeding(true)
+    try {
+      await Promise.all(
+        DEFAULT_SERVICES.map((s) =>
+          addDoc(collection(db, 'services'), { ...s, active: true, createdAt: serverTimestamp() })
+        )
+      )
+      toast.success('Default services loaded!')
+    } catch {
+      toast.error('Failed to load defaults')
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   const filtered = filter === 'all' ? services : services.filter((s) => s.category === filter)
 
@@ -75,7 +105,16 @@ export default function Services() {
       <PageHeader
         title="Services"
         subtitle={`${services.length} services`}
-        action={<button className="btn-primary" onClick={openAdd}>+ Add service</button>}
+        action={
+          <div className="flex gap-2">
+            {services.length === 0 && (
+              <button className="btn-secondary" onClick={loadDefaults} disabled={seeding}>
+                {seeding ? 'Loading…' : 'Load defaults'}
+              </button>
+            )}
+            <button className="btn-primary" onClick={openAdd}>+ Add service</button>
+          </div>
+        }
       />
 
       {/* Filter tabs */}
