@@ -43,7 +43,7 @@ function AppRoutes() {
       <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
       <Route path="/staff" element={<ManagerRoute><Staff /></ManagerRoute>} />
       <Route path="/services" element={<ManagerRoute><Services /></ManagerRoute>} />
-      <Route path="/settings" element={<ManagerRoute><Settings /></ManagerRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/reports" element={<ManagerRoute><Reports /></ManagerRoute>} />
       <Route path="/stations" element={<ManagerRoute><Stations /></ManagerRoute>} />
       <Route path="/payroll" element={<ManagerRoute><Payroll /></ManagerRoute>} />

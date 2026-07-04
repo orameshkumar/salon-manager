@@ -18,8 +18,8 @@ const NAV = [
   { to: '/payroll',          label: 'Payroll',      icon: '💰', roles: ADMIN_ROLES },
   { to: '/expenses',         label: 'Expenses',     icon: '💸', roles: ADMIN_ROLES },
   { to: '/commission-rules', label: 'Commission',   icon: '🎯', roles: ADMIN_ROLES },
-  { to: '/reports',      label: 'Reports',      icon: '📊', roles: ADMIN_ROLES },
-  { to: '/settings',     label: 'Settings',     icon: '⚙',  roles: ADMIN_ROLES },
+  { to: '/reports',  label: 'Reports',  icon: '📊', roles: ADMIN_ROLES },
+  { to: '/settings', label: 'Settings', icon: '⚙' },
 ]
 
 export default function Layout({ children }) {
