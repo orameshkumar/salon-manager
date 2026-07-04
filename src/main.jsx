@@ -7,7 +7,7 @@ import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/salon-manager">
       <App />
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
     </BrowserRouter>
