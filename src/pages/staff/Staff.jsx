@@ -18,7 +18,8 @@ export const ADMIN_ROLES = ['owner', 'manager']
 export const FLOOR_ROLES = ['stylist', 'beautician', 'nail technician', 'receptionist', 'trainee', 'helper']
 export const ALL_ROLES   = [...ADMIN_ROLES, ...FLOOR_ROLES]
 
-const EMPTY = { name: '', email: '', phone: '', roles: ['stylist'], password: '', services: [] }
+const SALARY_TYPES = ['monthly', 'daily', 'commission']
+const EMPTY = { name: '', email: '', phone: '', roles: ['stylist'], password: '', services: [], baseSalary: '', salaryType: 'monthly', commissionPct: '' }
 
 const ROLE_COLORS = {
   owner:            'bg-purple-100 text-purple-700',
@@ -80,9 +81,12 @@ export default function Staff() {
     setEditDoc(member)
     setForm({
       name: member.name, email: member.email, phone: member.phone,
-      roles: member.roles?.length ? member.roles : (member.role ? [member.role] : ['stylist']),
-      password: '',
-      services: member.services || [],
+      roles:         member.roles?.length ? member.roles : (member.role ? [member.role] : ['stylist']),
+      password:      '',
+      services:      member.services || [],
+      baseSalary:    member.baseSalary ?? '',
+      salaryType:    member.salaryType ?? 'monthly',
+      commissionPct: member.commissionPct ?? '',
     })
     setShowForm(true)
   }
@@ -122,13 +126,19 @@ export default function Staff() {
       }
       if (editDoc) {
         // Update Firestore only (cannot change Firebase Auth email/password from client)
-        await updateDoc(doc(db, 'employees', editDoc.id), {
+        const updateData = {
           name:      form.name,
           phone:     form.phone,
           roles:     form.roles,
           services:  form.services,
           updatedAt: serverTimestamp(),
-        })
+        }
+        if (isOwnerOrManager) {
+          updateData.baseSalary    = form.baseSalary !== '' ? Number(form.baseSalary) : null
+          updateData.salaryType    = form.salaryType
+          updateData.commissionPct = form.commissionPct !== '' ? Number(form.commissionPct) : null
+        }
+        await updateDoc(doc(db, 'employees', editDoc.id), updateData)
         toast.success('Staff member updated')
       } else {
         // Create Firebase Auth user then Firestore record
@@ -139,13 +149,16 @@ export default function Staff() {
         }
         const uid = await createAuthUser(form.email, form.password)
         await setDoc(doc(db, 'employees', uid), {
-          name:      form.name,
-          email:     form.email,
-          phone:     form.phone,
-          roles:     form.roles,
-          services:  form.services,
-          active:    true,
-          createdAt: serverTimestamp(),
+          name:          form.name,
+          email:         form.email,
+          phone:         form.phone,
+          roles:         form.roles,
+          services:      form.services,
+          active:        true,
+          baseSalary:    form.baseSalary !== '' ? Number(form.baseSalary) : null,
+          salaryType:    form.salaryType,
+          commissionPct: form.commissionPct !== '' ? Number(form.commissionPct) : null,
+          createdAt:     serverTimestamp(),
         })
         toast.success(`${form.name} added successfully`)
       }
@@ -328,6 +341,42 @@ export default function Staff() {
                       </button>
                     )
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Salary section — admin/owner only */}
+            {isOwnerOrManager && (
+              <div className="col-span-2">
+                <div className="border-t border-gray-200 pt-4 mt-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                    Salary & compensation (admin only)
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Salary type</label>
+                      <select className="input" value={form.salaryType}
+                        onChange={(e) => setForm({ ...form, salaryType: e.target.value })}>
+                        {SALARY_TYPES.map((t) => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        {form.salaryType === 'daily' ? 'Daily rate (₹)' : 'Base salary (₹)'}
+                      </label>
+                      <input className="input" type="number" min="0" placeholder="e.g. 15000"
+                        value={form.baseSalary}
+                        onChange={(e) => setForm({ ...form, baseSalary: e.target.value })} />
+                    </div>
+                    {form.salaryType === 'commission' && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Commission %</label>
+                        <input className="input" type="number" min="0" max="100" placeholder="e.g. 30"
+                          value={form.commissionPct}
+                          onChange={(e) => setForm({ ...form, commissionPct: e.target.value })} />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

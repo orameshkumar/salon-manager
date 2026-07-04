@@ -14,6 +14,8 @@ import Settings from './pages/settings/Settings'
 import Reports from './pages/reports/Reports'
 import Stations from './pages/stations/Stations'
 import CustomerProfile from './pages/customers/CustomerProfile'
+import Payroll from './pages/payroll/Payroll'
+import Expenses from './pages/expenses/Expenses'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
@@ -43,6 +45,8 @@ function AppRoutes() {
       <Route path="/settings" element={<ManagerRoute><Settings /></ManagerRoute>} />
       <Route path="/reports" element={<ManagerRoute><Reports /></ManagerRoute>} />
       <Route path="/stations" element={<ManagerRoute><Stations /></ManagerRoute>} />
+      <Route path="/payroll" element={<ManagerRoute><Payroll /></ManagerRoute>} />
+      <Route path="/expenses" element={<ManagerRoute><Expenses /></ManagerRoute>} />
       <Route path="/customers/:id" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

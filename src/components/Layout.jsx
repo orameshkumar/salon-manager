@@ -15,6 +15,8 @@ const NAV = [
   { to: '/staff',        label: 'Staff',        icon: '👥', roles: ADMIN_ROLES },
   { to: '/stations',     label: 'Stations',     icon: '💺', roles: ADMIN_ROLES },
   { to: '/services',     label: 'Services',     icon: '✂',  roles: ADMIN_ROLES },
+  { to: '/payroll',      label: 'Payroll',      icon: '💰', roles: ADMIN_ROLES },
+  { to: '/expenses',     label: 'Expenses',     icon: '💸', roles: ADMIN_ROLES },
   { to: '/reports',      label: 'Reports',      icon: '📊', roles: ADMIN_ROLES },
   { to: '/settings',     label: 'Settings',     icon: '⚙',  roles: ADMIN_ROLES },
 ]
