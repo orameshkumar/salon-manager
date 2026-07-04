@@ -1,0 +1,26 @@
+{
+  "name": "Salon Manager",
+  "short_name": "Salon",
+  "description": "Beauty • Billing • Beyond",
+  "start_url": "/salon-manager/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#d4af37",
+  "icons": [
+    {
+      "src": "/salon-manager/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/salon-manager/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/salon-manager/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ]
+}
