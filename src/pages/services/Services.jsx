@@ -6,7 +6,8 @@ import PageHeader from '../../components/PageHeader'
 import toast from 'react-hot-toast'
 
 const CATEGORIES = ['Hair', 'Skin', 'Nails', 'Body', 'Other']
-const EMPTY = { name: '', category: '', price: '', duration: '', description: '' }
+const COMMISSION_TYPES = ['none', 'percentage', 'fixed']
+const EMPTY = { name: '', category: '', price: '', duration: '', description: '', commissionType: 'none', commissionValue: '' }
 
 const DEFAULT_SERVICES = [
   { name: 'Haircut',     category: 'Hair', price: 300,  duration: 30,  description: 'Basic haircut and styling' },
@@ -67,7 +68,11 @@ export default function Services() {
 
   function openEdit(s) {
     setEditDoc(s)
-    setForm({ name: s.name, category: s.category || '', price: s.price ?? '', duration: s.duration || '', description: s.description || '' })
+    setForm({
+      name: s.name, category: s.category || '', price: s.price ?? '',
+      duration: s.duration || '', description: s.description || '',
+      commissionType: s.commissionType || 'none', commissionValue: s.commissionValue ?? '',
+    })
     setShowForm(true)
   }
 
@@ -81,7 +86,13 @@ export default function Services() {
     e.preventDefault()
     setSaving(true)
     try {
-      const data = { ...form, price: Number(form.price), duration: Number(form.duration) }
+      const data = {
+        ...form,
+        price:           Number(form.price),
+        duration:        Number(form.duration),
+        commissionType:  form.commissionType,
+        commissionValue: form.commissionType !== 'none' && form.commissionValue !== '' ? Number(form.commissionValue) : 0,
+      }
       if (editDoc) {
         await updateDoc(doc(db, 'services', editDoc.id), { ...data, updatedAt: serverTimestamp() })
         toast.success('Service updated')
@@ -172,6 +183,28 @@ export default function Services() {
               <input className="input" value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
+            {/* Commission */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Staff commission type</label>
+              <select className="input" value={form.commissionType}
+                onChange={(e) => setForm({ ...form, commissionType: e.target.value, commissionValue: '' })}>
+                <option value="none">None</option>
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed amount (₹)</option>
+              </select>
+            </div>
+            {form.commissionType !== 'none' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  {form.commissionType === 'percentage' ? 'Commission %' : 'Commission amount (₹)'}
+                </label>
+                <input className="input" type="number" min="0"
+                  max={form.commissionType === 'percentage' ? 100 : undefined}
+                  placeholder={form.commissionType === 'percentage' ? 'e.g. 30' : 'e.g. 100'}
+                  value={form.commissionValue}
+                  onChange={(e) => setForm({ ...form, commissionValue: e.target.value })} />
+              </div>
+            )}
             <div className="col-span-2 flex gap-2 justify-end">
               <button type="button" className="btn-secondary" onClick={closeForm}>Cancel</button>
               <button type="submit" className="btn-primary" disabled={saving}>
@@ -188,20 +221,27 @@ export default function Services() {
           <div className="overflow-x-auto"><table className="w-full text-sm min-w-[480px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Service', 'Category', 'Price', 'Duration', 'Description', 'Actions'].map((h) => (
+                {['Service', 'Category', 'Price', 'Commission', 'Duration', 'Description', 'Actions'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400 text-sm">No services found</td></tr>
+                <tr><td colSpan={7} className="text-center py-8 text-gray-400 text-sm">No services found</td></tr>
               )}
               {filtered.map((s) => (
                 <tr key={s.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{s.name}</td>
                   <td className="px-4 py-3 text-gray-600">{s.category || '—'}</td>
                   <td className="px-4 py-3 font-medium text-brand-700">₹{s.price}</td>
+                  <td className="px-4 py-3 text-xs text-gray-600">
+                    {!s.commissionType || s.commissionType === 'none'
+                      ? <span className="text-gray-400">—</span>
+                      : s.commissionType === 'percentage'
+                        ? <span className="badge-blue">{s.commissionValue}%</span>
+                        : <span className="badge-green">₹{s.commissionValue}</span>}
+                  </td>
                   <td className="px-4 py-3 text-gray-600">{s.duration ? `${s.duration} min` : '—'}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{s.description || '—'}</td>
                   <td className="px-4 py-3">

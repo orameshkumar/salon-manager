@@ -13,16 +13,28 @@ export default function Billing() {
   const { docs: invoices, loading } = useCollection('invoices')
   const { docs: customers }         = useCollection('customers', 'name')
   const { docs: services }          = useCollection('services', 'name')
+  const { docs: employees }         = useCollection('employees', 'name')
   const { loyalty }                 = useSettings()
 
+  const activeStaff = employees.filter((e) => e.active !== false)
+
+  // Build service list with commission info from Firestore
   const SERVICE_LIST = services.length > 0
-    ? services.map((s) => ({ name: s.name, price: s.price ?? 0 }))
+    ? services.map((s) => ({
+        name: s.name, price: s.price ?? 0,
+        commissionType: s.commissionType ?? 'none',
+        commissionValue: s.commissionValue ?? 0,
+      }))
     : [
-        { name: 'Haircut', price: 300 }, { name: 'Hair colour', price: 1200 },
-        { name: 'Blowdry', price: 400 }, { name: 'Facial', price: 800 },
-        { name: 'Manicure', price: 500 }, { name: 'Pedicure', price: 600 },
-        { name: 'Threading', price: 100 }, { name: 'Waxing', price: 700 },
-        { name: 'Massage', price: 1500 },
+        { name: 'Haircut', price: 300, commissionType: 'none', commissionValue: 0 },
+        { name: 'Hair colour', price: 1200, commissionType: 'none', commissionValue: 0 },
+        { name: 'Blowdry', price: 400, commissionType: 'none', commissionValue: 0 },
+        { name: 'Facial', price: 800, commissionType: 'none', commissionValue: 0 },
+        { name: 'Manicure', price: 500, commissionType: 'none', commissionValue: 0 },
+        { name: 'Pedicure', price: 600, commissionType: 'none', commissionValue: 0 },
+        { name: 'Threading', price: 100, commissionType: 'none', commissionValue: 0 },
+        { name: 'Waxing', price: 700, commissionType: 'none', commissionValue: 0 },
+        { name: 'Massage', price: 1500, commissionType: 'none', commissionValue: 0 },
       ]
 
   const [showForm, setShowForm]         = useState(false)
@@ -31,6 +43,8 @@ export default function Billing() {
   const [customerId, setCustomerId]     = useState('')
   const [customerPoints, setCustomerPoints] = useState(0)
   const [selectedServices, setSelectedServices] = useState([])
+  const [staffId, setStaffId]           = useState('')
+  const [staffName, setStaffName]       = useState('')
   const [discount, setDiscount]         = useState(0)
   const [redeemPoints, setRedeemPoints] = useState(0)
   const [paymentMode, setPaymentMode]   = useState('Cash')
@@ -43,6 +57,13 @@ export default function Billing() {
   const pointsEarned  = calcPointsEarned(total, loyalty)
   const maxRedeemable = calcMaxRedemption(subtotal, customerPoints, loyalty)
   const canRedeem     = customerPoints >= loyalty.minPointsRedeem
+
+  // Staff commission: sum per selected service
+  const staffCommission = selectedServices.reduce((sum, svc) => {
+    if (!svc.commissionType || svc.commissionType === 'none') return sum
+    if (svc.commissionType === 'percentage') return sum + Math.round((svc.price * (svc.commissionValue ?? 0)) / 100)
+    return sum + (svc.commissionValue ?? 0)
+  }, 0)
 
   function toggleService(svc) {
     setSelectedServices((prev) =>
@@ -71,6 +92,8 @@ export default function Billing() {
     const c = customers.find((x) => x.id === inv.customerId)
     setCustomerPoints(c ? getEffectivePoints(c, loyalty) : 0)
     setSelectedServices(inv.services || [])
+    setStaffId(inv.staffId || '')
+    setStaffName(inv.staffName || '')
     setDiscount(inv.discount ?? 0)
     setRedeemPoints(inv.redeemPoints ?? 0)
     setPaymentMode(inv.paymentMode || 'Cash')
@@ -83,6 +106,8 @@ export default function Billing() {
     setCustomerId('')
     setCustomerPoints(0)
     setSelectedServices([])
+    setStaffId('')
+    setStaffName('')
     setDiscount(0)
     setRedeemPoints(0)
     setPaymentMode('Cash')
@@ -118,16 +143,19 @@ export default function Billing() {
 
       const payload = {
         customerName,
-        customerId:    linkedId || null,
-        services:      selectedServices,
+        customerId:      linkedId || null,
+        services:        selectedServices,
+        staffId:         staffId || null,
+        staffName:       staffName || null,
+        staffCommission: staffId ? staffCommission : 0,
         subtotal,
-        discount:      Number(discount),
+        discount:        Number(discount),
         redeemPoints,
         redeemDiscount,
         total,
         pointsEarned,
         paymentMode,
-        status:        'paid',
+        status:          'paid',
       }
 
       if (editDoc) {
@@ -211,6 +239,24 @@ export default function Billing() {
               </div>
             </div>
 
+            {/* Served by */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Served by (staff)</label>
+                <select className="input" value={staffId}
+                  onChange={(e) => {
+                    const emp = activeStaff.find((s) => s.id === e.target.value)
+                    setStaffId(e.target.value)
+                    setStaffName(emp?.name ?? '')
+                  }}>
+                  <option value="">Select staff member</option>
+                  {activeStaff.map((emp) => (
+                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {/* Points balance */}
             {customerId && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
@@ -280,6 +326,14 @@ export default function Billing() {
                 {redeemPoints > 0 && <p className="text-xs text-green-600">Points: −₹{redeemDiscount} ({redeemPoints} pts)</p>}
                 <p className="text-base font-semibold text-brand-700">Total: ₹{total}</p>
                 <p className="text-xs text-amber-600 mt-1">+{pointsEarned} pts will be earned</p>
+                {staffId && staffCommission > 0 && (
+                  <p className="text-xs text-purple-600 mt-1 border-t border-purple-100 pt-1">
+                    Staff commission: ₹{staffCommission} ({staffName})
+                  </p>
+                )}
+                {staffId && staffCommission === 0 && (
+                  <p className="text-xs text-gray-400 mt-1">No commission configured for selected services</p>
+                )}
               </div>
             </div>
 
@@ -297,22 +351,26 @@ export default function Billing() {
       {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
         <div className="card p-0 overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[780px] text-sm">
+          <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Customer', 'Services', 'Subtotal', 'Discount', 'Total', 'Pts Earned', 'Payment', 'Date', 'Actions'].map((h) => (  // eslint-disable-line
+                {['Customer', 'Services', 'Staff', 'Commission', 'Subtotal', 'Discount', 'Total', 'Pts Earned', 'Payment', 'Date', 'Actions'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {invoices.length === 0 && (
-                <tr><td colSpan={9} className="text-center py-8 text-gray-400 text-sm">No invoices yet</td></tr>
+                <tr><td colSpan={11} className="text-center py-8 text-gray-400 text-sm">No invoices yet</td></tr>
               )}
               {invoices.map((inv) => (
                 <tr key={inv.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{inv.customerName}</td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{inv.services?.map((s) => s.name).join(', ')}</td>
+                  <td className="px-4 py-3 text-gray-600 text-xs">{inv.staffName || '—'}</td>
+                  <td className="px-4 py-3 text-purple-600 text-xs font-medium">
+                    {inv.staffCommission > 0 ? `₹${inv.staffCommission}` : '—'}
+                  </td>
                   <td className="px-4 py-3 text-gray-600">₹{inv.subtotal}</td>
                   <td className="px-4 py-3 text-gray-600">₹{inv.discount ?? 0}</td>
                   <td className="px-4 py-3 font-semibold text-gray-900">₹{inv.total}</td>
