@@ -143,7 +143,7 @@ export default function Layout({ children }) {
           <span className="text-sm font-semibold text-brand-700">Salon Manager</span>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
           {children}
         </main>
       </div>

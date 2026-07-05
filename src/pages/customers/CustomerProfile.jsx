@@ -44,7 +44,7 @@ export default function CustomerProfile() {
     <div className="p-6 space-y-6">
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <button onClick={() => navigate('/customers')}
             className="text-xs text-gray-500 hover:text-brand-600 mb-2 flex items-center gap-1">

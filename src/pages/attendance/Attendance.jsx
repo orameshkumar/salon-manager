@@ -153,10 +153,10 @@ export default function Attendance() {
       {view === 'daily' && (
         <>
           {/* Date + summary */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-3 mb-6">
             <input type="date" className="input w-full sm:w-44" value={date}
               onChange={(e) => setDate(e.target.value)} />
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2">
               {[
                 { label: 'Present',  val: present,  color: 'text-green-600' },
                 { label: 'Half day', val: halfDay,   color: 'text-yellow-600' },
@@ -164,7 +164,7 @@ export default function Attendance() {
                 { label: 'Leave',    val: onLeave,   color: 'text-blue-600' },
                 { label: 'Unmarked', val: employees.length - dayRecords.length, color: 'text-gray-500' },
               ].map(({ label, val, color }) => (
-                <div key={label} className="card py-2 px-3 text-center min-w-[72px]">
+                <div key={label} className="card py-2 px-3 text-center min-w-[60px]">
                   <p className={`text-xl font-semibold ${color}`}>{val}</p>
                   <p className="text-xs text-gray-500">{label}</p>
                 </div>
