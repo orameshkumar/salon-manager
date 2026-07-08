@@ -1,11 +1,23 @@
 import { format } from 'date-fns'
 
-export function printReceipt(inv, salonName = 'Salon Manager') {
+export function printReceipt(inv, salonName = 'Salon Manager', salonProfile = null, gstSettings = null) {
   const date = inv.createdAt?.toDate
     ? format(inv.createdAt.toDate(), 'dd MMM yyyy, h:mm a')
     : inv.updatedAt?.toDate
     ? format(inv.updatedAt.toDate(), 'dd MMM yyyy, h:mm a')
     : '—'
+
+  const displayName = salonProfile?.name || salonName
+  const tagline     = salonProfile?.tagline || 'Beauty • Billing • Beyond'
+  const phone       = salonProfile?.phone || ''
+  const address     = salonProfile?.address || ''
+  const gstin       = salonProfile?.gstin || ''
+
+  const gstEnabled  = gstSettings?.enabled && Number(gstSettings.rate) > 0
+  const gstRate     = Number(gstSettings?.rate ?? 18)
+  const gstLabel    = gstSettings?.label || 'GST'
+  const gstAmt      = gstEnabled ? Math.round((inv.total ?? 0) * gstRate / 100) : 0
+  const grandTotal  = (inv.total ?? 0) + gstAmt
 
   const invoiceNo = inv.id ? inv.id.slice(-8).toUpperCase() : '—'
 
@@ -58,8 +70,11 @@ export function printReceipt(inv, salonName = 'Salon Manager') {
 </head>
 <body>
   <div class="center">
-    <p class="bold large">${salonName}</p>
-    <p class="small" style="margin-top:2px;">Beauty • Billing • Beyond</p>
+    <p class="bold large">${displayName}</p>
+    <p class="small" style="margin-top:2px;">${tagline}</p>
+    ${phone ? `<p class="small">${phone}</p>` : ''}
+    ${address ? `<p class="small" style="white-space:pre-wrap;">${address}</p>` : ''}
+    ${gstin ? `<p class="small">GSTIN: ${gstin}</p>` : ''}
   </div>
 
   <hr class="divider" style="margin-top:12px;"/>
@@ -113,9 +128,14 @@ export function printReceipt(inv, salonName = 'Salon Manager') {
       <td class="small">Points redeemed (${inv.redeemPoints} pts)</td>
       <td class="small right">− ₹${(inv.redeemDiscount ?? 0).toLocaleString()}</td>
     </tr>` : ''}
+    ${gstEnabled ? `
+    <tr>
+      <td class="small">${gstLabel} (${gstRate}%)</td>
+      <td class="small right">+ ₹${gstAmt.toLocaleString()}</td>
+    </tr>` : ''}
     <tr class="total-row">
       <td>TOTAL</td>
-      <td class="right">₹${(inv.total ?? 0).toLocaleString()}</td>
+      <td class="right">₹${grandTotal.toLocaleString()}</td>
     </tr>
     <tr class="paid-row">
       <td class="small">Paid (${inv.paymentMode ?? '—'})</td>

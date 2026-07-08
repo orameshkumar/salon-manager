@@ -18,6 +18,64 @@ export const UPI_DEFAULTS = {
   qrUrl:        '',
 }
 
+export const SALON_DEFAULTS = {
+  name:     'Salon Manager',
+  tagline:  'Beauty • Billing • Beyond',
+  phone:    '',
+  address:  '',
+  gstin:    '',
+}
+
+export const GST_DEFAULTS = {
+  enabled:    false,
+  rate:       18,     // percentage
+  label:      'GST',  // 'GST' | 'CGST+SGST'
+}
+
+const DAYS = ['mon','tue','wed','thu','fri','sat','sun']
+export const WORKING_HOURS_DEFAULTS = Object.fromEntries(
+  DAYS.map((d) => [d, { open: d !== 'sun', openTime: '09:00', closeTime: '20:00' }])
+)
+
+export function useSalonProfile() {
+  const [salon, setSalon]     = useState(SALON_DEFAULTS)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'salon'), (snap) => {
+      if (snap.exists()) setSalon({ ...SALON_DEFAULTS, ...snap.data() })
+      setLoading(false)
+    }, () => setLoading(false))
+    return unsub
+  }, [])
+  return { salon, loading }
+}
+
+export function useGstSettings() {
+  const [gst, setGst]         = useState(GST_DEFAULTS)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'gst'), (snap) => {
+      if (snap.exists()) setGst({ ...GST_DEFAULTS, ...snap.data() })
+      setLoading(false)
+    }, () => setLoading(false))
+    return unsub
+  }, [])
+  return { gst, loading }
+}
+
+export function useWorkingHours() {
+  const [hours, setHours]     = useState(WORKING_HOURS_DEFAULTS)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'workingHours'), (snap) => {
+      if (snap.exists()) setHours({ ...WORKING_HOURS_DEFAULTS, ...snap.data() })
+      setLoading(false)
+    }, () => setLoading(false))
+    return unsub
+  }, [])
+  return { hours, loading }
+}
+
 export function useUpiSettings() {
   const [upi, setUpi]       = useState(UPI_DEFAULTS)
   const [loading, setLoading] = useState(true)

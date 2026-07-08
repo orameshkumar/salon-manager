@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, updateDoc, increment, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
-import { useSettings, calcPointsEarned, calcMaxRedemption, getEffectivePoints, useUpiSettings } from '../../hooks/useSettings'
+import { useSettings, calcPointsEarned, calcMaxRedemption, getEffectivePoints, useUpiSettings, useSalonProfile, useGstSettings } from '../../hooks/useSettings'
 import { useCommissionRules, calcTotalCommission } from '../../hooks/useCommissionRules'
 import PageHeader from '../../components/PageHeader'
 import { format } from 'date-fns'
@@ -18,6 +18,8 @@ export default function Billing() {
   const { docs: employees }         = useCollection('employees', 'name')
   const { loyalty }                 = useSettings()
   const { upi }                     = useUpiSettings()
+  const { salon }                   = useSalonProfile()
+  const { gst }                     = useGstSettings()
   const { rules: commissionRules }  = useCommissionRules()
 
   const activeStaff = employees.filter((e) => e.active !== false)
@@ -479,7 +481,7 @@ export default function Billing() {
                       <button className="text-xs text-blue-600 hover:underline" onClick={() => openEdit(inv)}>Edit</button>
                       <button
                         className="text-xs text-purple-600 hover:underline"
-                        onClick={() => printReceipt(inv, upi.merchantName || 'Salon Manager')}
+                        onClick={() => printReceipt(inv, upi.merchantName || salon.name || 'Salon Manager', salon, gst)}
                       >
                         Print
                       </button>

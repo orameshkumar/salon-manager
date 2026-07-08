@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react'
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../firebase/config'
-import { useSettings, LOYALTY_DEFAULTS, useUpiSettings, UPI_DEFAULTS } from '../../hooks/useSettings'
+import {
+  useSettings, LOYALTY_DEFAULTS,
+  useUpiSettings, UPI_DEFAULTS,
+  useSalonProfile, SALON_DEFAULTS,
+  useGstSettings, GST_DEFAULTS,
+  useWorkingHours, WORKING_HOURS_DEFAULTS,
+} from '../../hooks/useSettings'
 import { useAuth } from '../../context/AuthContext'
 import { ADMIN_ROLES, FLOOR_ROLES, ALL_ROLES } from '../staff/Staff'
 import { useTheme, THEMES } from '../../context/ThemeContext'
@@ -112,8 +118,22 @@ export default function Settings() {
   const { upi } = useUpiSettings()
   const [upiForm, setUpiForm]     = useState(UPI_DEFAULTS)
   const [upiSaving, setUpiSaving] = useState(false)
-
   useEffect(() => { setUpiForm(upi) }, [upi])
+
+  const { salon } = useSalonProfile()
+  const [salonForm, setSalonForm]     = useState(SALON_DEFAULTS)
+  const [salonSaving, setSalonSaving] = useState(false)
+  useEffect(() => { setSalonForm({ ...SALON_DEFAULTS, ...salon }) }, [salon])
+
+  const { gst } = useGstSettings()
+  const [gstForm, setGstForm]     = useState(GST_DEFAULTS)
+  const [gstSaving, setGstSaving] = useState(false)
+  useEffect(() => { setGstForm({ ...GST_DEFAULTS, ...gst }) }, [gst])
+
+  const { hours } = useWorkingHours()
+  const [hoursForm, setHoursForm]     = useState(WORKING_HOURS_DEFAULTS)
+  const [hoursSaving, setHoursSaving] = useState(false)
+  useEffect(() => { setHoursForm({ ...WORKING_HOURS_DEFAULTS, ...hours }) }, [hours])
 
   useEffect(() => { setForm(loyalty) }, [loyalty])
 
@@ -139,6 +159,40 @@ export default function Settings() {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function handleSalonSave(e) {
+    e.preventDefault()
+    if (!salonForm.name.trim()) { toast.error('Salon name is required'); return }
+    setSalonSaving(true)
+    try {
+      await setDoc(doc(db, 'settings', 'salon'), { ...salonForm, updatedAt: serverTimestamp() })
+      toast.success('Salon profile saved')
+    } catch { toast.error('Failed to save') } finally { setSalonSaving(false) }
+  }
+
+  async function handleGstSave(e) {
+    e.preventDefault()
+    setGstSaving(true)
+    try {
+      await setDoc(doc(db, 'settings', 'gst'), {
+        ...gstForm, rate: Number(gstForm.rate), updatedAt: serverTimestamp(),
+      })
+      toast.success('GST settings saved')
+    } catch { toast.error('Failed to save') } finally { setGstSaving(false) }
+  }
+
+  async function handleHoursSave(e) {
+    e.preventDefault()
+    setHoursSaving(true)
+    try {
+      await setDoc(doc(db, 'settings', 'workingHours'), { ...hoursForm, updatedAt: serverTimestamp() })
+      toast.success('Working hours saved')
+    } catch { toast.error('Failed to save') } finally { setHoursSaving(false) }
+  }
+
+  function setDay(d, key, val) {
+    setHoursForm((p) => ({ ...p, [d]: { ...p[d], [key]: val } }))
   }
 
   async function handleUpiSave(e) {
@@ -301,6 +355,157 @@ export default function Settings() {
           </button>
         </div>
       </form>}
+
+      {/* Salon Profile */}
+      {isAdmin && (
+        <form onSubmit={handleSalonSave} className="space-y-4">
+          <div className="card">
+            <p className="text-sm font-semibold text-gray-800 mb-1">Salon Profile</p>
+            <p className="text-xs text-gray-500 mb-4">
+              Shown on printed receipts and throughout the app.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Salon name *</label>
+                <input className="input" required placeholder="e.g. The Style Studio"
+                  value={salonForm.name}
+                  onChange={(e) => setSalonForm({ ...salonForm, name: e.target.value })} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Tagline</label>
+                <input className="input" placeholder="e.g. Beauty • Billing • Beyond"
+                  value={salonForm.tagline}
+                  onChange={(e) => setSalonForm({ ...salonForm, tagline: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
+                <input className="input" placeholder="e.g. +91 98765 43210" type="tel"
+                  value={salonForm.phone}
+                  onChange={(e) => setSalonForm({ ...salonForm, phone: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">GSTIN</label>
+                <input className="input" placeholder="e.g. 27AAAAA0000A1Z5"
+                  value={salonForm.gstin}
+                  onChange={(e) => setSalonForm({ ...salonForm, gstin: e.target.value.toUpperCase() })} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Address</label>
+                <textarea className="input" rows={2} placeholder="Shop address shown on receipts"
+                  value={salonForm.address}
+                  onChange={(e) => setSalonForm({ ...salonForm, address: e.target.value })} />
+              </div>
+            </div>
+            <div className="flex justify-end mt-4">
+              <button type="submit" className="btn-primary" disabled={salonSaving}>
+                {salonSaving ? 'Saving…' : 'Save salon profile'}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* GST Settings */}
+      {isAdmin && (
+        <form onSubmit={handleGstSave} className="space-y-4">
+          <div className="card">
+            <p className="text-sm font-semibold text-gray-800 mb-1">GST / Tax Settings</p>
+            <p className="text-xs text-gray-500 mb-4">
+              When enabled, GST is calculated on top of the bill and shown on receipts.
+            </p>
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 rounded accent-brand-600"
+                  checked={gstForm.enabled}
+                  onChange={(e) => setGstForm({ ...gstForm, enabled: e.target.checked })} />
+                <span className="text-sm text-gray-700 font-medium">Enable GST on invoices</span>
+              </label>
+
+              {gstForm.enabled && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">GST rate (%)</label>
+                    <input className="input" type="number" min="0" max="100" step="0.01"
+                      value={gstForm.rate}
+                      onChange={(e) => setGstForm({ ...gstForm, rate: e.target.value })} />
+                    <p className="text-xs text-gray-400 mt-1">Typically 18% for beauty services</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-2">Display label</label>
+                    <div className="flex gap-4">
+                      {['GST', 'CGST+SGST'].map((lbl) => (
+                        <label key={lbl} className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name="gstLabel" value={lbl}
+                            checked={gstForm.label === lbl}
+                            onChange={() => setGstForm({ ...gstForm, label: lbl })} />
+                          <span className="text-sm text-gray-700">{lbl}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">How it appears on receipts</p>
+                  </div>
+                  <div className="sm:col-span-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
+                    Example: ₹1,000 bill + {gstForm.rate}% {gstForm.label} = ₹{(1000 * (1 + Number(gstForm.rate) / 100)).toLocaleString('en-IN', { maximumFractionDigits: 0 })} total
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end mt-4">
+              <button type="submit" className="btn-primary" disabled={gstSaving}>
+                {gstSaving ? 'Saving…' : 'Save GST settings'}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* Working Hours */}
+      {isAdmin && (
+        <form onSubmit={handleHoursSave} className="space-y-4">
+          <div className="card">
+            <p className="text-sm font-semibold text-gray-800 mb-1">Working Hours</p>
+            <p className="text-xs text-gray-500 mb-4">
+              Set your salon's open/close times for each day of the week.
+            </p>
+            <div className="space-y-2">
+              {[
+                ['mon','Mon'],['tue','Tue'],['wed','Wed'],['thu','Thu'],
+                ['fri','Fri'],['sat','Sat'],['sun','Sun'],
+              ].map(([d, label]) => {
+                const day = hoursForm[d] ?? { open: false, openTime: '09:00', closeTime: '20:00' }
+                return (
+                  <div key={d} className="flex flex-wrap items-center gap-3 py-1.5 border-b border-gray-100 last:border-0">
+                    <label className="flex items-center gap-2 w-20 cursor-pointer flex-shrink-0">
+                      <input type="checkbox" className="w-4 h-4 rounded accent-brand-600"
+                        checked={day.open}
+                        onChange={(e) => setDay(d, 'open', e.target.checked)} />
+                      <span className="text-sm font-medium text-gray-700">{label}</span>
+                    </label>
+                    {day.open ? (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <input type="time" className="input w-auto py-1.5 min-h-[36px]"
+                          value={day.openTime}
+                          onChange={(e) => setDay(d, 'openTime', e.target.value)} />
+                        <span className="text-xs text-gray-400">to</span>
+                        <input type="time" className="input w-auto py-1.5 min-h-[36px]"
+                          value={day.closeTime}
+                          onChange={(e) => setDay(d, 'closeTime', e.target.value)} />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Closed</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="flex justify-end mt-4">
+              <button type="submit" className="btn-primary" disabled={hoursSaving}>
+                {hoursSaving ? 'Saving…' : 'Save working hours'}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
 
       {/* UPI / Payment settings */}
       {isAdmin && (
