@@ -621,7 +621,7 @@ export default function Appointments() {
                       <td className="px-4 py-3">
                         <select value={a.status}
                           onChange={(ev) => handleStatusChange(a, ev.target.value)}
-                          className="input text-sm py-1.5 w-auto min-h-[36px]">
+                          className="input text-sm py-1.5 w-auto">
                           {STATUSES.map((s) => <option key={s}>{s}</option>)}
                         </select>
                       </td>

@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore'
 import { db } from '../firebase/config'
 
-export function useCollection(collectionPath, orderByField = 'createdAt') {
+export function useCollection(collectionPath, orderByField = 'createdAt', direction) {
   const [docs, setDocs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const dir = direction ?? (orderByField === 'name' ? 'asc' : 'desc')
+
   useEffect(() => {
-    const q = query(collection(db, collectionPath), orderBy(orderByField, 'desc'))
+    const q = query(collection(db, collectionPath), orderBy(orderByField, dir))
     const unsub = onSnapshot(
       q,
       (snap) => {
@@ -21,7 +23,7 @@ export function useCollection(collectionPath, orderByField = 'createdAt') {
       }
     )
     return unsub
-  }, [collectionPath, orderByField])
+  }, [collectionPath, orderByField, dir])
 
   return { docs, loading, error }
 }

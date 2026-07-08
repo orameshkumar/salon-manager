@@ -3,7 +3,7 @@ import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from '
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
 import PageHeader from '../../components/PageHeader'
-import { format, parseISO, isWithinInterval } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import toast from 'react-hot-toast'
 
 const LEAVE_TYPES = ['planned', 'sick', 'emergency', 'other']
@@ -198,7 +198,7 @@ export default function StaffLeave() {
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap mb-4">
-        <select className="input w-auto py-1.5 min-h-[36px] text-sm"
+        <select className="input w-auto py-1.5 text-sm"
           value={filterStaff} onChange={(e) => setFilter(e.target.value)}>
           <option value="all">All staff</option>
           {activeStaff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}

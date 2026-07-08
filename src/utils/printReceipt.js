@@ -137,10 +137,17 @@ export function printReceipt(inv, salonName = 'Salon Manager', salonProfile = nu
       <td>TOTAL</td>
       <td class="right">₹${grandTotal.toLocaleString()}</td>
     </tr>
+    ${(inv.payments?.length > 1)
+      ? inv.payments.map((p, i) => `
+    <tr class="paid-row">
+      <td class="small">Payment ${i + 1} (${p.mode})</td>
+      <td class="small right">₹${(p.amount ?? 0).toLocaleString()}</td>
+    </tr>`).join('')
+      : `
     <tr class="paid-row">
       <td class="small">Paid (${inv.paymentMode ?? '—'})</td>
       <td class="small right">₹${(inv.amountPaid ?? inv.total ?? 0).toLocaleString()}</td>
-    </tr>
+    </tr>`}
     ${(inv.balanceDue ?? 0) > 0 ? `
     <tr class="balance-row">
       <td class="small">Balance due</td>
