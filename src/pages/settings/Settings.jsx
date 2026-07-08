@@ -483,11 +483,11 @@ export default function Settings() {
                     </label>
                     {day.open ? (
                       <div className="flex items-center gap-2 flex-wrap">
-                        <input type="time" className="input w-auto py-1.5 min-h-[36px]"
+                        <input type="time" className="input w-auto min-w-[110px] py-1.5 min-h-[44px]"
                           value={day.openTime}
                           onChange={(e) => setDay(d, 'openTime', e.target.value)} />
                         <span className="text-xs text-gray-400">to</span>
-                        <input type="time" className="input w-auto py-1.5 min-h-[36px]"
+                        <input type="time" className="input w-auto min-w-[110px] py-1.5 min-h-[44px]"
                           value={day.closeTime}
                           onChange={(e) => setDay(d, 'closeTime', e.target.value)} />
                       </div>

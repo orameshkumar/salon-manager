@@ -189,7 +189,7 @@ function WaitingList({ serviceNames, allStaff }) {
               <input className="input" value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
-            <div className="col-span-2 flex justify-end gap-2">
+            <div className="sm:col-span-2 flex justify-end gap-2">
               <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
               <button type="submit" className="btn-primary" disabled={saving}>
                 {saving ? 'Adding…' : 'Add to waitlist'}
