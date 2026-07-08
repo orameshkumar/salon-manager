@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, Timestamp, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
 import PageHeader from '../../components/PageHeader'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import QRCode from 'qrcode'
 
 const STATUSES = ['scheduled', 'in-progress', 'completed', 'cancelled', 'no-show']
 
@@ -100,11 +101,65 @@ function BoardView({ appointments, onStatusChange }) {
 }
 
 // ── Waiting list ─────────────────────────────────────────────────────────────
+const BASE_URL = window.location.origin + '/salon-manager'
+
+function QRModal({ entry, onClose }) {
+  const qrUrl = `${BASE_URL}/queue/${entry.id}`
+  const [dataUrl, setDataUrl] = useState('')
+
+  useEffect(() => {
+    QRCode.toDataURL(qrUrl, { width: 200, margin: 2, color: { dark: '#111827', light: '#ffffff' } })
+      .then(setDataUrl)
+      .catch(() => {})
+  }, [qrUrl])
+
+  function printTicket() {
+    const w = window.open('', '_blank', 'width=320,height=520')
+    w.document.write(`<!DOCTYPE html><html><head><title>Queue — ${entry.customerName}</title>
+      <style>body{font-family:sans-serif;text-align:center;padding:24px;max-width:280px;margin:0 auto}
+      h2{font-size:16px;margin-bottom:4px}p{font-size:12px;color:#555;margin:4px 0}
+      img{margin:12px auto;display:block}
+      @media print{@page{size:80mm auto;margin:8mm}}</style></head>
+      <body>
+        <h2>${entry.customerName}</h2>
+        <p>${entry.service || 'Walk-in'}${entry.stylistPref ? ' · ' + entry.stylistPref : ''}</p>
+        <p>Scan to track your queue position</p>
+        ${dataUrl ? `<img src="${dataUrl}" width="200" height="200"/>` : ''}
+        <p style="font-size:9px;color:#999;word-break:break-all;margin-top:8px;">${qrUrl}</p>
+        <script>window.onload=function(){window.print()}<\/script>
+      </body></html>`)
+    w.document.close()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-6 text-center">
+        <p className="text-sm font-semibold text-gray-800 mb-0.5">Queue ticket</p>
+        <p className="text-xs text-gray-500 mb-4">{entry.customerName} — scan to track position</p>
+        <div className="flex justify-center mb-3">
+          {dataUrl
+            ? <img src={dataUrl} alt="Queue QR code" className="rounded-lg" width={200} height={200} />
+            : <div className="w-[200px] h-[200px] bg-gray-100 rounded-lg animate-pulse" />}
+        </div>
+        <p className="text-xs text-gray-400 break-all mb-4">{qrUrl}</p>
+        <div className="flex gap-2 justify-center">
+          <button className="btn-secondary text-sm" onClick={onClose}>Close</button>
+          <button className="btn-primary text-sm" disabled={!dataUrl} onClick={printTicket}>
+            🖨 Print ticket
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function WaitingList({ serviceNames, allStaff }) {
   const { docs: waitList, loading } = useCollection('waitingList', 'addedAt')
   const [showForm, setShowForm]   = useState(false)
   const [form, setForm]           = useState(WAIT_EMPTY)
   const [saving, setSaving]       = useState(false)
+  const [qrEntry, setQrEntry]     = useState(null)
 
   const active = waitList.filter((w) => w.status === 'waiting' || w.status === 'called')
   const done   = waitList.filter((w) => w.status === 'seated' || w.status === 'left')
@@ -114,7 +169,7 @@ function WaitingList({ serviceNames, allStaff }) {
     if (!form.customerName.trim()) { toast.error('Customer name required'); return }
     setSaving(true)
     try {
-      await addDoc(collection(db, 'waitingList'), {
+      const ref = await addDoc(collection(db, 'waitingList'), {
         ...form,
         estimatedWait: Number(form.estimatedWait) || 15,
         status: 'waiting',
@@ -123,6 +178,7 @@ function WaitingList({ serviceNames, allStaff }) {
       toast.success('Added to waiting list')
       setForm(WAIT_EMPTY)
       setShowForm(false)
+      setQrEntry({ id: ref.id, ...form, status: 'waiting' })
     } catch { toast.error('Failed to add') } finally { setSaving(false) }
   }
 
@@ -235,7 +291,7 @@ function WaitingList({ serviceNames, allStaff }) {
                           }`}>{w.status}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             {w.status === 'waiting' && (
                               <button className="text-xs text-amber-600 hover:underline font-medium"
                                 onClick={() => setStatus(w.id, 'called')}>📣 Call</button>
@@ -244,6 +300,8 @@ function WaitingList({ serviceNames, allStaff }) {
                               <button className="text-xs text-green-600 hover:underline font-medium"
                                 onClick={() => setStatus(w.id, 'seated')}>✓ Seated</button>
                             )}
+                            <button className="text-xs text-brand-600 hover:underline font-medium"
+                              onClick={() => setQrEntry(w)}>📲 QR</button>
                             <button className="text-xs text-gray-500 hover:underline"
                               onClick={() => setStatus(w.id, 'left')}>Left</button>
                             <button className="text-xs text-red-500 hover:underline"
@@ -280,6 +338,8 @@ function WaitingList({ serviceNames, allStaff }) {
           )}
         </>
       )}
+
+      {qrEntry && <QRModal entry={qrEntry} onClose={() => setQrEntry(null)} />}
     </div>
   )
 }

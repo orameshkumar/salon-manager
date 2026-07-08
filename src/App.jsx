@@ -18,6 +18,7 @@ import Payroll from './pages/payroll/Payroll'
 import Expenses from './pages/expenses/Expenses'
 import CommissionRules from './pages/commissionRules/CommissionRules'
 import StaffLeave from './pages/staffLeave/StaffLeave'
+import QueueStatus from './pages/queue/QueueStatus'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
@@ -52,6 +53,7 @@ function AppRoutes() {
       <Route path="/commission-rules" element={<ManagerRoute><CommissionRules /></ManagerRoute>} />
       <Route path="/staff-leave" element={<ManagerRoute><StaffLeave /></ManagerRoute>} />
       <Route path="/customers/:id" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
+      <Route path="/queue/:id" element={<QueueStatus />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -6,5 +6,6 @@ export default defineConfig({
   base: '/salon-manager/',
   resolve: {
     alias: { '@': '/src' },
+    dedupe: ['react', 'react-dom'],
   },
 })
