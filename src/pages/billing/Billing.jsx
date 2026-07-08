@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import QRCode from 'qrcode'
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, updateDoc, increment, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
@@ -10,6 +11,37 @@ import toast from 'react-hot-toast'
 import { printReceipt } from '../../utils/printReceipt'
 
 const PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Wallet']
+
+// Generates a UPI deep-link QR: opens any UPI app with amount + merchant pre-filled
+function UpiQR({ upiId, merchantName, amount }) {
+  const [dataUrl, setDataUrl] = useState('')
+
+  useEffect(() => {
+    if (!upiId) return
+    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(merchantName || '')}&am=${amount}&cu=INR&tn=${encodeURIComponent('Salon payment')}`
+    QRCode.toDataURL(upiLink, { width: 160, margin: 1, color: { dark: '#3b0764', light: '#faf5ff' } })
+      .then(setDataUrl)
+      .catch(() => {})
+  }, [upiId, merchantName, amount])
+
+  if (!upiId) return null
+
+  return (
+    <div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+      <div className="flex items-center gap-3">
+        {dataUrl
+          ? <img src={dataUrl} alt="UPI QR" className="w-20 h-20 rounded-lg border border-purple-200 flex-shrink-0" />
+          : <div className="w-20 h-20 bg-purple-100 rounded-lg animate-pulse flex-shrink-0" />}
+        <div className="min-w-0">
+          {merchantName && <p className="text-xs font-semibold text-purple-800 truncate">{merchantName}</p>}
+          <p className="text-xs font-mono text-purple-700 truncate">{upiId}</p>
+          <p className="text-sm font-bold text-purple-900 mt-1">₹{amount}</p>
+          <p className="text-xs text-purple-500 mt-0.5">Amount pre-filled — scan with any UPI app</p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function Billing() {
   const { docs: invoices, loading } = useCollection('invoices')
@@ -358,16 +390,7 @@ export default function Billing() {
                   {PAYMENT_MODES.map((m) => <option key={m}>{m}</option>)}
                 </select>
                 {paymentMode === 'UPI' && upi.upiId && (
-                  <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded-lg flex items-center gap-3">
-                    {upi.qrUrl && (
-                      <img src={upi.qrUrl} alt="UPI QR" className="w-14 h-14 object-contain rounded border border-purple-100 bg-white flex-shrink-0" />
-                    )}
-                    <div>
-                      {upi.merchantName && <p className="text-xs font-semibold text-purple-800">{upi.merchantName}</p>}
-                      <p className="text-xs font-mono text-purple-700">{upi.upiId}</p>
-                      <p className="text-xs text-purple-500 mt-0.5">Scan QR or pay to UPI ID above</p>
-                    </div>
-                  </div>
+                  <UpiQR upiId={upi.upiId} merchantName={upi.merchantName} amount={total} />
                 )}
               </div>
               <div className="card bg-brand-50 border-brand-200 text-right">
@@ -422,6 +445,10 @@ export default function Billing() {
               <select className="input w-32" value={collectMode} onChange={(e) => setCollectMode(e.target.value)}>
                 {PAYMENT_MODES.map((m) => <option key={m}>{m}</option>)}
               </select>
+              {collectMode === 'UPI' && upi.upiId && (
+                <UpiQR upiId={upi.upiId} merchantName={upi.merchantName}
+                  amount={collectAmount || (collectDoc?.balanceDue ?? collectDoc?.total ?? 0)} />
+              )}
             </div>
             <div className="flex gap-2">
               <button type="button" className="btn-secondary" onClick={() => { setCollectDoc(null); setCollectAmount('') }}>Cancel</button>
