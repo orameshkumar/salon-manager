@@ -7,6 +7,7 @@ import { useCommissionRules, calcTotalCommission } from '../../hooks/useCommissi
 import PageHeader from '../../components/PageHeader'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import { printReceipt } from '../../utils/printReceipt'
 
 const PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Wallet']
 
@@ -476,6 +477,12 @@ export default function Billing() {
                         </button>
                       )}
                       <button className="text-xs text-blue-600 hover:underline" onClick={() => openEdit(inv)}>Edit</button>
+                      <button
+                        className="text-xs text-purple-600 hover:underline"
+                        onClick={() => printReceipt(inv, upi.merchantName || 'Salon Manager')}
+                      >
+                        Print
+                      </button>
                       <button
                         className="text-xs text-red-600 hover:underline disabled:opacity-50"
                         disabled={deleting === inv.id}
