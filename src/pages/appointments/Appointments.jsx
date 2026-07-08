@@ -276,7 +276,7 @@ export default function Appointments() {
                     <select
                       value={a.status}
                       onChange={(ev) => handleStatusChange(a, ev.target.value)}
-                      className="text-xs border border-gray-200 rounded px-1 py-0.5 bg-white"
+                      className="input text-sm py-1.5 w-auto min-h-[36px]"
                     >
                       {STATUSES.map((s) => <option key={s}>{s}</option>)}
                     </select>

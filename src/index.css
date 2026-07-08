@@ -110,14 +110,16 @@ body {
 /* ── Component classes ─────────────────────────────────────────────────────── */
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    min-height: 44px;
     background-color: var(--brand-600);
     color: #ffffff;
   }
   .btn-primary:hover:not(:disabled) { background-color: var(--brand-700); }
 
   .btn-secondary {
-    @apply px-4 py-2 rounded-lg text-sm font-medium transition-colors;
+    @apply px-4 py-2.5 rounded-lg text-sm font-medium transition-colors;
+    min-height: 44px;
     background-color: var(--bg-surface);
     color: var(--text-2);
     border: 1px solid var(--border);
@@ -125,7 +127,9 @@ body {
   .btn-secondary:hover { background-color: var(--bg-hover); }
 
   .input {
-    @apply w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent;
+    @apply w-full rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:border-transparent;
+    font-size: 1rem; /* 16px — prevents iOS Safari auto-zoom on focus */
+    min-height: 44px; /* touch target */
     background-color: var(--input-bg);
     color: var(--input-text);
     border: 1px solid var(--input-border);

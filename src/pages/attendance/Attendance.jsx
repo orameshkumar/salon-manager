@@ -204,7 +204,7 @@ export default function Attendance() {
                             <div className="flex gap-1">
                               {STATUSES.map((s) => (
                                 <button key={s} disabled={saving} onClick={() => markAttendance(emp, s)}
-                                  className={`px-2 py-1 text-xs border rounded transition-colors capitalize ${STATUS_STYLE[s]}`}>
+                                  className={`px-2 py-1.5 text-xs border rounded transition-colors capitalize min-h-[32px] ${STATUS_STYLE[s]}`}>
                                   {s}
                                 </button>
                               ))}
@@ -217,7 +217,7 @@ export default function Attendance() {
                               <select
                                 value={record.status}
                                 onChange={(e) => editAttendance(record, e.target.value)}
-                                className="text-xs border border-gray-200 rounded px-1 py-0.5 bg-white"
+                                className="input text-sm py-1.5 w-auto min-h-[36px]"
                               >
                                 {STATUSES.map((s) => <option key={s}>{s}</option>)}
                               </select>
