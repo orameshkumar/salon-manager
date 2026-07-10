@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import QRCode from 'qrcode'
 import { Timestamp } from 'firebase/firestore'
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, updateDoc, increment, query, where, getDocs } from 'firebase/firestore'
@@ -7,6 +7,9 @@ import { useCollection } from '../../hooks/useCollection'
 import { useSettings, calcPointsEarned, calcMaxRedemption, getEffectivePoints, useUpiSettings, useSalonProfile, useGstSettings } from '../../hooks/useSettings'
 import { useCommissionRules, calcTotalCommission } from '../../hooks/useCommissionRules'
 import PageHeader from '../../components/PageHeader'
+import CustomerSearch from '../../components/CustomerSearch'
+import Pagination from '../../components/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { printReceipt } from '../../utils/printReceipt'
@@ -199,15 +202,17 @@ export default function Billing() {
   const { gst }                     = useGstSettings()
   const { rules: commissionRules }  = useCommissionRules()
 
-  const activeStaff = employees.filter((e) => e.active !== false)
+  const activeStaff = useMemo(() => employees.filter((e) => e.active !== false), [employees])
 
-  const SERVICE_LIST = services.map((s) => ({
+  const SERVICE_LIST = useMemo(() => services.map((s) => ({
     name: s.name, price: s.price ?? 0,
     category: s.category ?? '',
     commissionType: s.commissionType ?? 'none',
     commissionValue: s.commissionValue ?? 0,
-  }))
+  })), [services])
 
+  const [invSearch, setInvSearch]       = useState('')
+  const [svcSearch, setSvcSearch]       = useState('')
   const [showForm, setShowForm]         = useState(false)
   const [editDoc,  setEditDoc]          = useState(null)
   const [customerName, setCustomerName] = useState('')
@@ -223,6 +228,24 @@ export default function Billing() {
   const [saving, setSaving]             = useState(false)
   const [deleting, setDeleting]         = useState(null)
   const [paymentInvId, setPaymentInvId] = useState(null) // which invoice's payment panel is open
+
+  const filteredSvcList = useMemo(() => {
+    if (!svcSearch.trim()) return SERVICE_LIST
+    const q = svcSearch.toLowerCase()
+    return SERVICE_LIST.filter((s) => s.name.toLowerCase().includes(q) || s.category?.toLowerCase().includes(q))
+  }, [SERVICE_LIST, svcSearch])
+
+  const filteredInvoices = useMemo(() => {
+    if (!invSearch.trim()) return invoices
+    const q = invSearch.toLowerCase()
+    return invoices.filter((i) =>
+      i.customerName?.toLowerCase().includes(q) ||
+      i.staffName?.toLowerCase().includes(q) ||
+      i.services?.some((s) => s.name.toLowerCase().includes(q))
+    )
+  }, [invoices, invSearch])
+
+  const invPag = usePagination(filteredInvoices, 20)
 
   const subtotal       = selectedServices.reduce((s, i) => s + i.price, 0)
   const redeemDiscount = redeemPoints * loyalty.redeemValue
@@ -242,13 +265,26 @@ export default function Billing() {
     )
   }
 
-  function selectCustomer(id) {
+  const selectCustomerById = useCallback((id) => {
     setCustomerId(id)
     const c = customers.find((x) => x.id === id)
     setCustomerName(c?.name ?? '')
     setCustomerPoints(c ? getEffectivePoints(c, loyalty) : 0)
     setRedeemPoints(0)
-  }
+  }, [customers, loyalty])
+
+  const selectCustomerByName = useCallback((name, phone) => {
+    setCustomerName(name)
+    const c = customers.find((x) => x.name === name && (!phone || x.phone === phone))
+    if (c) {
+      setCustomerId(c.id)
+      setCustomerPoints(getEffectivePoints(c, loyalty))
+    } else {
+      setCustomerId('')
+      setCustomerPoints(0)
+    }
+    setRedeemPoints(0)
+  }, [customers, loyalty])
 
   function openEdit(inv) {
     setEditDoc(inv)
@@ -385,19 +421,22 @@ export default function Billing() {
           <form onSubmit={handleSave} className="space-y-4">
 
             {/* Customer */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="inv-cust-name" className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
-                <input id="inv-cust-name" className="input" required value={customerName}
-                  onChange={(e) => { setCustomerName(e.target.value); setCustomerId(''); setCustomerPoints(0) }} />
-              </div>
-              <div>
-                <label htmlFor="inv-cust-link" className="block text-xs font-medium text-gray-700 mb-1">Link to existing customer</label>
-                <select id="inv-cust-link" className="input" value={customerId} onChange={(e) => selectCustomer(e.target.value)}>
-                  <option value="">Walk-in / new</option>
-                  {customers.map((c) => <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>)}
-                </select>
-              </div>
+            <div>
+              <label htmlFor="inv-cust-search" className="block text-xs font-medium text-gray-700 mb-1">
+                Customer *
+                {customerId && <span className="ml-2 text-green-600 font-normal">✓ Linked — loyalty points active</span>}
+              </label>
+              <CustomerSearch
+                inputId="inv-cust-search"
+                customers={customers}
+                value={customerName}
+                onChange={selectCustomerByName}
+                onClear={() => { setCustomerName(''); setCustomerId(''); setCustomerPoints(0); setRedeemPoints(0) }}
+                placeholder="Search by name or phone…"
+              />
+              {!customerId && customerName && (
+                <p className="text-xs text-amber-600 mt-1">New customer — will be auto-created on save</p>
+              )}
             </div>
 
             {/* Staff */}
@@ -443,9 +482,25 @@ export default function Billing() {
 
             {/* Services */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-2">Services *</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {SERVICE_LIST.map((svc) => {
+              <div className="flex items-center justify-between mb-2 gap-3">
+                <label className="block text-xs font-medium text-gray-700">
+                  Services *
+                  {selectedServices.length > 0 && (
+                    <span className="ml-2 text-brand-600">{selectedServices.length} selected</span>
+                  )}
+                </label>
+                <input
+                  className="input py-1 text-xs w-40"
+                  placeholder="Search services…"
+                  value={svcSearch}
+                  onChange={(e) => setSvcSearch(e.target.value)}
+                />
+              </div>
+              {filteredSvcList.length === 0 && (
+                <p className="text-xs text-gray-400 italic py-2">No services match "{svcSearch}"</p>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto pr-1">
+                {filteredSvcList.map((svc) => {
                   const selected = selectedServices.some((s) => s.name === svc.name)
                   return (
                     <button key={svc.name} type="button" onClick={() => toggleService(svc)}
@@ -539,7 +594,34 @@ export default function Billing() {
       )}
 
       {/* Invoices table */}
-      {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <input
+          className="input py-1.5 text-sm w-64"
+          placeholder="Search invoices by customer, staff, service…"
+          value={invSearch}
+          onChange={(e) => { setInvSearch(e.target.value); invPag.reset() }}
+        />
+        {invSearch && (
+          <button className="text-xs text-gray-400 hover:text-gray-600" onClick={() => { setInvSearch(''); invPag.reset() }}>
+            Clear
+          </button>
+        )}
+        <span className="text-xs text-gray-400 ml-auto">
+          {filteredInvoices.length} invoice{filteredInvoices.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="card p-0 overflow-hidden">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex gap-4 px-4 py-3 border-b border-gray-100 animate-pulse">
+              {[...Array(6)].map((_, j) => (
+                <div key={j} className="h-4 bg-gray-100 rounded flex-1" />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
         <div className="card p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-sm">
@@ -551,10 +633,12 @@ export default function Billing() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {invoices.length === 0 && (
-                  <tr><td colSpan={10} className="text-center py-8 text-gray-400 text-sm">No invoices yet</td></tr>
+                {invPag.slice.length === 0 && (
+                  <tr><td colSpan={10} className="text-center py-8 text-gray-400 text-sm">
+                    {invSearch ? `No invoices match "${invSearch}"` : 'No invoices yet'}
+                  </td></tr>
                 )}
-                {invoices.map((inv) => {
+                {invPag.slice.map((inv) => {
                   const paid    = inv.amountPaid ?? 0
                   const balance = Math.max(0, inv.total - paid)
                   const status  = inv.status ?? (balance <= 0 ? 'paid' : paid > 0 ? 'partial' : 'unpaid')
@@ -609,6 +693,13 @@ export default function Billing() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            page={invPag.page}
+            totalPages={invPag.totalPages}
+            onPage={invPag.setPage}
+            total={invPag.total}
+            pageSize={20}
+          />
         </div>
       )}
     </div>

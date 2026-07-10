@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, Timestamp, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useCollection } from '../../hooks/useCollection'
 import PageHeader from '../../components/PageHeader'
+import Pagination from '../../components/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import QRCode from 'qrcode'
@@ -22,7 +24,10 @@ const WAIT_EMPTY = { customerName: '', customerPhone: '', service: '', stylistPr
 
 // ── Board view ──────────────────────────────────────────────────────────────
 function BoardView({ appointments, onStatusChange }) {
-  const others = appointments.filter((a) => a.status === 'cancelled' || a.status === 'no-show')
+  const others = useMemo(
+    () => appointments.filter((a) => a.status === 'cancelled' || a.status === 'no-show'),
+    [appointments]
+  )
 
   return (
     <div className="space-y-4">
@@ -360,13 +365,31 @@ export default function Appointments() {
   const [deleting, setDeleting] = useState(null)
   const [filter, setFilter]     = useState('all')
 
-  const allStaff   = employees.filter((e) => e.active !== false)
-  const stylists   = form.service
-    ? allStaff.filter((e) => !e.services?.length || e.services.includes(form.service))
-    : allStaff
-  const serviceNames = services.map((s) => s.name)
+  const allStaff     = useMemo(() => employees.filter((e) => e.active !== false), [employees])
+  const stylists     = useMemo(() =>
+    form.service
+      ? allStaff.filter((e) => !e.services?.length || e.services.includes(form.service))
+      : allStaff,
+    [allStaff, form.service])
+  const serviceNames = useMemo(() => services.map((s) => s.name), [services])
 
-  const filtered = appointments.filter((a) => filter === 'all' ? true : a.status === filter)
+  const [apptSearch, setApptSearch] = useState('')
+
+  const filtered = useMemo(() => {
+    let list = filter === 'all' ? appointments : appointments.filter((a) => a.status === filter)
+    if (apptSearch.trim()) {
+      const q = apptSearch.toLowerCase()
+      list = list.filter((a) =>
+        a.customerName?.toLowerCase().includes(q) ||
+        a.service?.toLowerCase().includes(q) ||
+        a.stylist?.toLowerCase().includes(q) ||
+        a.customerPhone?.includes(q)
+      )
+    }
+    return list
+  }, [appointments, filter, apptSearch])
+
+  const apptPag = usePagination(filtered, 15)
 
   function openAdd() {
     setEditDoc(null)
@@ -485,7 +508,7 @@ export default function Appointments() {
         {view === 'list' && (
           <div className="flex gap-1.5 flex-wrap">
             {['all', ...STATUSES].map((s) => (
-              <button key={s} onClick={() => setFilter(s)}
+              <button key={s} onClick={() => { setFilter(s); apptPag.reset() }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   filter === s ? 'bg-brand-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}>
@@ -593,7 +616,31 @@ export default function Appointments() {
       )}
 
       {view === 'list' && (
-        loading ? <p className="text-sm text-gray-500">Loading…</p> : (
+        loading ? (
+          <div className="card p-0 overflow-hidden">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex gap-4 px-4 py-3 border-b border-gray-100 animate-pulse">
+                {[...Array(6)].map((_, j) => <div key={j} className="h-4 bg-gray-100 rounded flex-1" />)}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-3 flex-wrap">
+              <input
+                className="input py-1.5 text-sm w-64"
+                placeholder="Search by customer, service, stylist, phone…"
+                value={apptSearch}
+                onChange={(e) => { setApptSearch(e.target.value); apptPag.reset() }}
+              />
+              {apptSearch && (
+                <button className="text-xs text-gray-400 hover:text-gray-600"
+                  onClick={() => { setApptSearch(''); apptPag.reset() }}>Clear</button>
+              )}
+              <span className="text-xs text-gray-400 ml-auto">
+                {filtered.length} appointment{filtered.length !== 1 ? 's' : ''}
+              </span>
+            </div>
           <div className="card p-0 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px] text-sm">
@@ -605,10 +652,12 @@ export default function Appointments() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filtered.length === 0 && (
-                    <tr><td colSpan={8} className="text-center py-8 text-gray-400 text-sm">No appointments found</td></tr>
+                  {apptPag.slice.length === 0 && (
+                    <tr><td colSpan={8} className="text-center py-8 text-gray-400 text-sm">
+                      {apptSearch ? `No results for "${apptSearch}"` : 'No appointments found'}
+                    </td></tr>
                   )}
-                  {filtered.map((a) => (
+                  {apptPag.slice.map((a) => (
                     <tr key={a.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-900">{a.customerName}</td>
                       <td className="px-4 py-3 text-gray-600">{a.customerPhone}</td>
@@ -639,7 +688,15 @@ export default function Appointments() {
                 </tbody>
               </table>
             </div>
+            <Pagination
+              page={apptPag.page}
+              totalPages={apptPag.totalPages}
+              onPage={apptPag.setPage}
+              total={apptPag.total}
+              pageSize={15}
+            />
           </div>
+          </>
         )
       )}
     </div>
