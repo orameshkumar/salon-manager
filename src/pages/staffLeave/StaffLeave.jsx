@@ -150,40 +150,40 @@ export default function StaffLeave() {
           </p>
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Staff member *</label>
-              <select className="input" required value={form.staffId} onChange={(e) => pickStaff(e.target.value)}>
+              <label htmlFor="leave-staff" className="block text-xs font-medium text-gray-700 mb-1">Staff member *</label>
+              <select id="leave-staff" className="input" required value={form.staffId} onChange={(e) => pickStaff(e.target.value)}>
                 <option value="">Select staff</option>
                 {activeStaff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Leave type</label>
-              <select className="input" value={form.leaveType}
+              <label htmlFor="leave-type" className="block text-xs font-medium text-gray-700 mb-1">Leave type</label>
+              <select id="leave-type" className="input" value={form.leaveType}
                 onChange={(e) => setForm({ ...form, leaveType: e.target.value })}>
                 {LEAVE_TYPES.map((t) => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Start date *</label>
-              <input className="input" type="date" required value={form.startDate}
+              <label htmlFor="leave-start" className="block text-xs font-medium text-gray-700 mb-1">Start date *</label>
+              <input id="leave-start" className="input" type="date" required value={form.startDate}
                 onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">End date *</label>
-              <input className="input" type="date" required value={form.endDate}
+              <label htmlFor="leave-end" className="block text-xs font-medium text-gray-700 mb-1">End date *</label>
+              <input id="leave-end" className="input" type="date" required value={form.endDate}
                 min={form.startDate}
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-              <select className="input" value={form.status}
+              <label htmlFor="leave-status" className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+              <select id="leave-status" className="input" value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}>
                 {LEAVE_STATUS.map((s) => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Reason / notes</label>
-              <input className="input" placeholder="Optional" value={form.reason}
+              <label htmlFor="leave-reason" className="block text-xs font-medium text-gray-700 mb-1">Reason / notes</label>
+              <input id="leave-reason" className="input" placeholder="Optional" value={form.reason}
                 onChange={(e) => setForm({ ...form, reason: e.target.value })} />
             </div>
             <div className="sm:col-span-2 flex gap-2 justify-end">

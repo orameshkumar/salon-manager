@@ -156,37 +156,37 @@ export default function Services() {
           </p>
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Service name *</label>
-              <input className="input" required value={form.name}
+              <label htmlFor="svc-name" className="block text-xs font-medium text-gray-700 mb-1">Service name *</label>
+              <input id="svc-name" className="input" required value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-              <select className="input" value={form.category}
+              <label htmlFor="svc-category" className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+              <select id="svc-category" className="input" value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 <option value="">Select category</option>
                 {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Price (₹) *</label>
-              <input className="input" type="number" min="0" required value={form.price}
+              <label htmlFor="svc-price" className="block text-xs font-medium text-gray-700 mb-1">Price (₹) *</label>
+              <input id="svc-price" className="input" type="number" min="0" required value={form.price}
                 onChange={(e) => setForm({ ...form, price: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Duration (minutes)</label>
-              <input className="input" type="number" min="0" value={form.duration}
+              <label htmlFor="svc-duration" className="block text-xs font-medium text-gray-700 mb-1">Duration (minutes)</label>
+              <input id="svc-duration" className="input" type="number" min="0" value={form.duration}
                 onChange={(e) => setForm({ ...form, duration: e.target.value })} />
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-              <input className="input" value={form.description}
+              <label htmlFor="svc-description" className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              <input id="svc-description" className="input" value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
             {/* Commission */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Staff commission type</label>
-              <select className="input" value={form.commissionType}
+              <label htmlFor="svc-commission-type" className="block text-xs font-medium text-gray-700 mb-1">Staff commission type</label>
+              <select id="svc-commission-type" className="input" value={form.commissionType}
                 onChange={(e) => setForm({ ...form, commissionType: e.target.value, commissionValue: '' })}>
                 <option value="none">None</option>
                 <option value="percentage">Percentage (%)</option>
@@ -195,10 +195,10 @@ export default function Services() {
             </div>
             {form.commissionType !== 'none' && (
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label htmlFor="svc-commission-value" className="block text-xs font-medium text-gray-700 mb-1">
                   {form.commissionType === 'percentage' ? 'Commission %' : 'Commission amount (₹)'}
                 </label>
-                <input className="input" type="number" min="0"
+                <input id="svc-commission-value" className="input" type="number" min="0"
                   max={form.commissionType === 'percentage' ? 100 : undefined}
                   placeholder={form.commissionType === 'percentage' ? 'e.g. 30' : 'e.g. 100'}
                   value={form.commissionValue}

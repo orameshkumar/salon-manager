@@ -255,24 +255,27 @@ export default function Staff() {
           </p>
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Full name *</label>
+              <label htmlFor="staff-name" className="block text-xs font-medium text-gray-700 mb-1">Full name *</label>
               <input
+                id="staff-name"
                 className="input" required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
+              <label htmlFor="staff-phone" className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
               <input
+                id="staff-phone"
                 className="input"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Email *</label>
+              <label htmlFor="staff-email" className="block text-xs font-medium text-gray-700 mb-1">Email *</label>
               <input
+                id="staff-email"
                 className="input" type="email" required
                 value={form.email}
                 disabled={!!editDoc}
@@ -309,10 +312,11 @@ export default function Staff() {
             </div>
             {!editDoc && (
               <div className="col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label htmlFor="staff-password" className="block text-xs font-medium text-gray-700 mb-1">
                   Password * <span className="text-gray-400">(min 6 characters)</span>
                 </label>
                 <input
+                  id="staff-password"
                   className="input" type="password" required minLength={6}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -361,24 +365,24 @@ export default function Staff() {
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Salary type</label>
-                      <select className="input" value={form.salaryType}
+                      <label htmlFor="staff-salary-type" className="block text-xs font-medium text-gray-700 mb-1">Salary type</label>
+                      <select id="staff-salary-type" className="input" value={form.salaryType}
                         onChange={(e) => setForm({ ...form, salaryType: e.target.value })}>
                         {SALARY_TYPES.map((t) => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <label htmlFor="staff-base-salary" className="block text-xs font-medium text-gray-700 mb-1">
                         {form.salaryType === 'daily' ? 'Daily rate (₹)' : 'Base salary (₹)'}
                       </label>
-                      <input className="input" type="number" min="0" placeholder="e.g. 15000"
+                      <input id="staff-base-salary" className="input" type="number" min="0" placeholder="e.g. 15000"
                         value={form.baseSalary}
                         onChange={(e) => setForm({ ...form, baseSalary: e.target.value })} />
                     </div>
                     {form.salaryType === 'commission' && (
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Commission %</label>
-                        <input className="input" type="number" min="0" max="100" placeholder="e.g. 30"
+                        <label htmlFor="staff-commission-pct" className="block text-xs font-medium text-gray-700 mb-1">Commission %</label>
+                        <input id="staff-commission-pct" className="input" type="number" min="0" max="100" placeholder="e.g. 30"
                           value={form.commissionPct}
                           onChange={(e) => setForm({ ...form, commissionPct: e.target.value })} />
                       </div>

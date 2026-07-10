@@ -154,7 +154,7 @@ export default function Attendance() {
         <>
           {/* Date + summary */}
           <div className="flex flex-wrap items-center gap-3 mb-6">
-            <input type="date" className="input w-full sm:w-44" value={date}
+            <input type="date" className="input w-full sm:w-44" aria-label="Attendance date" value={date}
               onChange={(e) => setDate(e.target.value)} />
             <div className="flex flex-wrap gap-2">
               {[
@@ -246,7 +246,7 @@ export default function Attendance() {
       {view === 'monthly' && (
         <>
           <div className="flex items-center gap-3 mb-6">
-            <input type="month" className="input w-full sm:w-44" value={monthDate}
+            <input type="month" className="input w-full sm:w-44" aria-label="Attendance month" value={monthDate}
               onChange={(e) => setMonthDate(e.target.value)} />
             <p className="text-xs text-gray-500">{workingDays} working days this month</p>
           </div>

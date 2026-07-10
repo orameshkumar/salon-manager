@@ -210,39 +210,39 @@ function WaitingList({ serviceNames, allStaff }) {
         <div className="card border-brand-200">
           <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
-              <input className="input" required value={form.customerName}
+              <label htmlFor="wait-cust-name" className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
+              <input id="wait-cust-name" className="input" required value={form.customerName}
                 onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
-              <input className="input" value={form.customerPhone}
+              <label htmlFor="wait-cust-phone" className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
+              <input id="wait-cust-phone" className="input" value={form.customerPhone}
                 onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Service</label>
-              <select className="input" value={form.service}
+              <label htmlFor="wait-service" className="block text-xs font-medium text-gray-700 mb-1">Service</label>
+              <select id="wait-service" className="input" value={form.service}
                 onChange={(e) => setForm({ ...form, service: e.target.value })}>
                 <option value="">Any / walk-in</option>
                 {serviceNames.map((s) => <option key={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Preferred stylist</label>
-              <select className="input" value={form.stylistPref}
+              <label htmlFor="wait-stylist" className="block text-xs font-medium text-gray-700 mb-1">Preferred stylist</label>
+              <select id="wait-stylist" className="input" value={form.stylistPref}
                 onChange={(e) => setForm({ ...form, stylistPref: e.target.value })}>
                 <option value="">Any available</option>
                 {allStaff.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Est. wait (minutes)</label>
-              <input className="input" type="number" min="0" value={form.estimatedWait}
+              <label htmlFor="wait-est-wait" className="block text-xs font-medium text-gray-700 mb-1">Est. wait (minutes)</label>
+              <input id="wait-est-wait" className="input" type="number" min="0" value={form.estimatedWait}
                 onChange={(e) => setForm({ ...form, estimatedWait: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
-              <input className="input" value={form.notes}
+              <label htmlFor="wait-notes" className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+              <input id="wait-notes" className="input" value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
             <div className="sm:col-span-2 flex justify-end gap-2">
@@ -504,33 +504,33 @@ export default function Appointments() {
           </p>
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
-              <input className="input" required value={form.customerName}
+              <label htmlFor="appt-cust-name" className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
+              <input id="appt-cust-name" className="input" required value={form.customerName}
                 onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Phone *</label>
-              <input className="input" required value={form.customerPhone}
+              <label htmlFor="appt-cust-phone" className="block text-xs font-medium text-gray-700 mb-1">Phone *</label>
+              <input id="appt-cust-phone" className="input" required value={form.customerPhone}
                 onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Service *</label>
+              <label htmlFor="appt-service" className="block text-xs font-medium text-gray-700 mb-1">Service *</label>
               {serviceNames.length === 0
                 ? <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">No services configured.</p>
-                : <select className="input" required value={form.service}
+                : <select id="appt-service" className="input" required value={form.service}
                     onChange={(e) => setForm({ ...form, service: e.target.value, stylist: '' })}>
                     <option value="">Select service</option>
                     {serviceNames.map((s) => <option key={s}>{s}</option>)}
                   </select>}
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="appt-stylist" className="block text-xs font-medium text-gray-700 mb-1">
                 Stylist
                 {form.service && stylists.length < allStaff.length && (
                   <span className="text-gray-400 font-normal ml-1">(filtered)</span>
                 )}
               </label>
-              <select className="input" value={form.stylist}
+              <select id="appt-stylist" className="input" value={form.stylist}
                 onChange={(e) => setForm({ ...form, stylist: e.target.value })}>
                 <option value="">Any available</option>
                 {stylists.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
@@ -547,8 +547,8 @@ export default function Appointments() {
             )}
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Station</label>
-              <select className="input" value={form.stationId}
+              <label htmlFor="appt-station" className="block text-xs font-medium text-gray-700 mb-1">Station</label>
+              <select id="appt-station" className="input" value={form.stationId}
                 onChange={(e) => setForm({ ...form, stationId: e.target.value })}>
                 <option value="">No station</option>
                 {stations.map((s) => (
@@ -559,18 +559,18 @@ export default function Appointments() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Date *</label>
-              <input className="input" type="date" required value={form.date}
+              <label htmlFor="appt-date" className="block text-xs font-medium text-gray-700 mb-1">Date *</label>
+              <input id="appt-date" className="input" type="date" required value={form.date}
                 onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Time *</label>
-              <input className="input" type="time" required value={form.time}
+              <label htmlFor="appt-time" className="block text-xs font-medium text-gray-700 mb-1">Time *</label>
+              <input id="appt-time" className="input" type="time" required value={form.time}
                 onChange={(e) => setForm({ ...form, time: e.target.value })} />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
-              <input className="input" value={form.notes}
+              <label htmlFor="appt-notes" className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+              <input id="appt-notes" className="input" value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
             <div className="sm:col-span-2 flex gap-2 justify-end">

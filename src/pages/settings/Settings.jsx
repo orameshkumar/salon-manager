@@ -60,13 +60,13 @@ function MyProfile() {
       <form onSubmit={handleSave} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Display name *</label>
-            <input className="input" required value={name} placeholder="Enter your full name"
+            <label htmlFor="profile-name" className="block text-xs font-medium text-gray-700 mb-1">Display name *</label>
+            <input id="profile-name" className="input" required value={name} placeholder="Enter your full name"
               onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-            <input className="input bg-gray-50" disabled value={user?.email ?? ''} />
+            <label htmlFor="profile-email" className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+            <input id="profile-email" className="input bg-gray-50" disabled value={user?.email ?? ''} />
           </div>
         </div>
 
@@ -278,18 +278,18 @@ export default function Settings() {
 
             {form.earnType === 'fixed' ? (
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label htmlFor="earn-fixed" className="block text-xs font-medium text-gray-700 mb-1">
                   Every ₹ <span className="text-brand-600">{form.earnFixed}</span> spent = 1 point
                 </label>
-                <input className="input max-w-xs" type="number" min="1" value={form.earnFixed}
+                <input id="earn-fixed" className="input max-w-xs" type="number" min="1" value={form.earnFixed}
                   onChange={(e) => f('earnFixed', e.target.value)} />
               </div>
             ) : (
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label htmlFor="earn-percent" className="block text-xs font-medium text-gray-700 mb-1">
                   <span className="text-brand-600">{form.earnPercent}%</span> of bill total = points earned
                 </label>
-                <input className="input max-w-xs" type="number" min="1" max="100" value={form.earnPercent}
+                <input id="earn-percent" className="input max-w-xs" type="number" min="1" max="100" value={form.earnPercent}
                   onChange={(e) => f('earnPercent', e.target.value)} />
               </div>
             )}
@@ -305,26 +305,26 @@ export default function Settings() {
           <p className="text-sm font-semibold text-gray-800 mb-4">Points Redemption</p>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="redeem-value" className="block text-xs font-medium text-gray-700 mb-1">
                 1 point = ₹ <span className="text-brand-600">{form.redeemValue}</span>
               </label>
-              <input className="input max-w-xs" type="number" min="1" value={form.redeemValue}
+              <input id="redeem-value" className="input max-w-xs" type="number" min="1" value={form.redeemValue}
                 onChange={(e) => f('redeemValue', e.target.value)} />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="redeem-min-pts" className="block text-xs font-medium text-gray-700 mb-1">
                 Minimum points required to redeem
               </label>
-              <input className="input max-w-xs" type="number" min="0" value={form.minPointsRedeem}
+              <input id="redeem-min-pts" className="input max-w-xs" type="number" min="0" value={form.minPointsRedeem}
                 onChange={(e) => f('minPointsRedeem', e.target.value)} />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="redeem-max-pct" className="block text-xs font-medium text-gray-700 mb-1">
                 Maximum redemption per bill (% of subtotal)
               </label>
-              <input className="input max-w-xs" type="number" min="1" max="100" value={form.maxRedeemPct}
+              <input id="redeem-max-pct" className="input max-w-xs" type="number" min="1" max="100" value={form.maxRedeemPct}
                 onChange={(e) => f('maxRedeemPct', e.target.value)} />
             </div>
 
@@ -338,10 +338,10 @@ export default function Settings() {
         <div className="card">
           <p className="text-sm font-semibold text-gray-800 mb-4">Points Expiry</p>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label htmlFor="expiry-days" className="block text-xs font-medium text-gray-700 mb-1">
               Points expire after (days) — set 0 for never
             </label>
-            <input className="input max-w-xs" type="number" min="0" value={form.expiryDays}
+            <input id="expiry-days" className="input max-w-xs" type="number" min="0" value={form.expiryDays}
               onChange={(e) => f('expiryDays', e.target.value)} />
             <p className="text-xs text-gray-400 mt-1">
               {Number(form.expiryDays) === 0 ? 'Points never expire' : `Points expire after ${form.expiryDays} days`}
@@ -366,32 +366,32 @@ export default function Settings() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Salon name *</label>
-                <input className="input" required placeholder="e.g. The Style Studio"
+                <label htmlFor="salon-name" className="block text-xs font-medium text-gray-700 mb-1">Salon name *</label>
+                <input id="salon-name" className="input" required placeholder="e.g. The Style Studio"
                   value={salonForm.name}
                   onChange={(e) => setSalonForm({ ...salonForm, name: e.target.value })} />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Tagline</label>
-                <input className="input" placeholder="e.g. Beauty • Billing • Beyond"
+                <label htmlFor="salon-tagline" className="block text-xs font-medium text-gray-700 mb-1">Tagline</label>
+                <input id="salon-tagline" className="input" placeholder="e.g. Beauty • Billing • Beyond"
                   value={salonForm.tagline}
                   onChange={(e) => setSalonForm({ ...salonForm, tagline: e.target.value })} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
-                <input className="input" placeholder="e.g. +91 98765 43210" type="tel"
+                <label htmlFor="salon-phone" className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
+                <input id="salon-phone" className="input" placeholder="e.g. +91 98765 43210" type="tel"
                   value={salonForm.phone}
                   onChange={(e) => setSalonForm({ ...salonForm, phone: e.target.value })} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">GSTIN</label>
-                <input className="input" placeholder="e.g. 27AAAAA0000A1Z5"
+                <label htmlFor="salon-gstin" className="block text-xs font-medium text-gray-700 mb-1">GSTIN</label>
+                <input id="salon-gstin" className="input" placeholder="e.g. 27AAAAA0000A1Z5"
                   value={salonForm.gstin}
                   onChange={(e) => setSalonForm({ ...salonForm, gstin: e.target.value.toUpperCase() })} />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Address</label>
-                <textarea className="input" rows={2} placeholder="Shop address shown on receipts"
+                <label htmlFor="salon-address" className="block text-xs font-medium text-gray-700 mb-1">Address</label>
+                <textarea id="salon-address" className="input" rows={2} placeholder="Shop address shown on receipts"
                   value={salonForm.address}
                   onChange={(e) => setSalonForm({ ...salonForm, address: e.target.value })} />
               </div>
@@ -424,8 +424,8 @@ export default function Settings() {
               {gstForm.enabled && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">GST rate (%)</label>
-                    <input className="input" type="number" min="0" max="100" step="0.01"
+                    <label htmlFor="gst-rate" className="block text-xs font-medium text-gray-700 mb-1">GST rate (%)</label>
+                    <input id="gst-rate" className="input" type="number" min="0" max="100" step="0.01"
                       value={gstForm.rate}
                       onChange={(e) => setGstForm({ ...gstForm, rate: e.target.value })} />
                     <p className="text-xs text-gray-400 mt-1">Typically 18% for beauty services</p>
@@ -484,10 +484,12 @@ export default function Settings() {
                     {day.open ? (
                       <div className="flex items-center gap-2 flex-wrap">
                         <input type="time" className="input w-auto min-w-[110px] py-1.5 min-h-[44px]"
+                          aria-label={`${label} open time`}
                           value={day.openTime}
                           onChange={(e) => setDay(d, 'openTime', e.target.value)} />
                         <span className="text-xs text-gray-400">to</span>
                         <input type="time" className="input w-auto min-w-[110px] py-1.5 min-h-[44px]"
+                          aria-label={`${label} close time`}
                           value={day.closeTime}
                           onChange={(e) => setDay(d, 'closeTime', e.target.value)} />
                       </div>
@@ -517,22 +519,22 @@ export default function Settings() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">UPI ID (VPA) *</label>
-                <input className="input" placeholder="e.g. salon@okaxis"
+                <label htmlFor="upi-id" className="block text-xs font-medium text-gray-700 mb-1">UPI ID (VPA) *</label>
+                <input id="upi-id" className="input" placeholder="e.g. salon@okaxis"
                   value={upiForm.upiId}
                   onChange={(e) => setUpiForm({ ...upiForm, upiId: e.target.value })} />
                 <p className="text-xs text-gray-400 mt-1">Your UPI address customers will pay to</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Merchant name</label>
-                <input className="input" placeholder="e.g. The Style Salon"
+                <label htmlFor="upi-merchant-name" className="block text-xs font-medium text-gray-700 mb-1">Merchant name</label>
+                <input id="upi-merchant-name" className="input" placeholder="e.g. The Style Salon"
                   value={upiForm.merchantName}
                   onChange={(e) => setUpiForm({ ...upiForm, merchantName: e.target.value })} />
                 <p className="text-xs text-gray-400 mt-1">Shown to customers during payment</p>
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">QR code image URL <span className="text-gray-400 font-normal">(optional)</span></label>
-                <input className="input" placeholder="https://…/qr.png"
+                <label htmlFor="upi-qr-url" className="block text-xs font-medium text-gray-700 mb-1">QR code image URL <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input id="upi-qr-url" className="input" placeholder="https://…/qr.png"
                   value={upiForm.qrUrl}
                   onChange={(e) => setUpiForm({ ...upiForm, qrUrl: e.target.value })} />
                 <p className="text-xs text-gray-400 mt-1">Paste a public URL to your UPI QR code image — shown on the billing screen when customer pays via UPI</p>

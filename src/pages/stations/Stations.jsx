@@ -91,13 +91,13 @@ export default function Stations() {
           </p>
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Station name / number *</label>
-              <input className="input" required placeholder="e.g. Chair 1, Station A"
+              <label htmlFor="station-name" className="block text-xs font-medium text-gray-700 mb-1">Station name / number *</label>
+              <input id="station-name" className="input" required placeholder="e.g. Chair 1, Station A"
                 value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Assigned staff</label>
-              <select className="input" value={form.assignedStaffId}
+              <label htmlFor="station-staff" className="block text-xs font-medium text-gray-700 mb-1">Assigned staff</label>
+              <select id="station-staff" className="input" value={form.assignedStaffId}
                 onChange={(e) => setForm({ ...form, assignedStaffId: e.target.value })}>
                 <option value="">Unassigned</option>
                 {activeStaff.map((emp) => (
@@ -106,8 +106,8 @@ export default function Stations() {
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Description / notes</label>
-              <input className="input" placeholder="e.g. Hair only, near window…"
+              <label htmlFor="station-description" className="block text-xs font-medium text-gray-700 mb-1">Description / notes</label>
+              <input id="station-description" className="input" placeholder="e.g. Hair only, near window…"
                 value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
             <div className="col-span-2 flex gap-2 justify-end">

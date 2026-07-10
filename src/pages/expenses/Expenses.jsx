@@ -147,34 +147,34 @@ export default function Expenses() {
           </p>
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Type *</label>
-              <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+              <label htmlFor="exp-type" className="block text-xs font-medium text-gray-700 mb-1">Type *</label>
+              <select id="exp-type" className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
                 {EXPENSE_TYPES.map((t) => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Amount (₹) *</label>
-              <input className="input" type="number" min="0" required value={form.amount}
+              <label htmlFor="exp-amount" className="block text-xs font-medium text-gray-700 mb-1">Amount (₹) *</label>
+              <input id="exp-amount" className="input" type="number" min="0" required value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-              <input className="input" placeholder="e.g. June electricity bill" value={form.description}
+              <label htmlFor="exp-description" className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              <input id="exp-description" className="input" placeholder="e.g. June electricity bill" value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Date *</label>
-              <input className="input" type="date" required value={form.date}
+              <label htmlFor="exp-date" className="block text-xs font-medium text-gray-700 mb-1">Date *</label>
+              <input id="exp-date" className="input" type="date" required value={form.date}
                 onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Vendor / Payee</label>
-              <input className="input" placeholder="e.g. EB Office, Landlord" value={form.vendor}
+              <label htmlFor="exp-vendor" className="block text-xs font-medium text-gray-700 mb-1">Vendor / Payee</label>
+              <input id="exp-vendor" className="input" placeholder="e.g. EB Office, Landlord" value={form.vendor}
                 onChange={(e) => setForm({ ...form, vendor: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
-              <input className="input" placeholder="Any extra notes" value={form.notes}
+              <label htmlFor="exp-notes" className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+              <input id="exp-notes" className="input" placeholder="Any extra notes" value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
             <div className="sm:col-span-2 flex gap-2 justify-end">

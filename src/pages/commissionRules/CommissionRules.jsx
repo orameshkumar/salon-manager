@@ -54,23 +54,23 @@ function CategoryRules({ rules, employees, services }) {
 
       <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Category *</label>
-          <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} disabled={!!editId}>
+          <label htmlFor="cat-rule-category" className="block text-xs font-medium text-gray-700 mb-1">Category *</label>
+          <select id="cat-rule-category" className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} disabled={!!editId}>
             <option value="">Select</option>
             {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Commission type *</label>
-          <select className="input" value={form.commissionType} onChange={(e) => setForm({ ...form, commissionType: e.target.value })}>
+          <label htmlFor="cat-rule-type" className="block text-xs font-medium text-gray-700 mb-1">Commission type *</label>
+          <select id="cat-rule-type" className="input" value={form.commissionType} onChange={(e) => setForm({ ...form, commissionType: e.target.value })}>
             {COMMISSION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+          <label htmlFor="cat-rule-value" className="block text-xs font-medium text-gray-700 mb-1">
             {form.commissionType === 'percentage' ? 'Rate (%)' : 'Amount (₹)'} *
           </label>
-          <input className="input" type="number" min="0" max={form.commissionType === 'percentage' ? 100 : undefined}
+          <input id="cat-rule-value" className="input" type="number" min="0" max={form.commissionType === 'percentage' ? 100 : undefined}
             value={form.commissionValue} onChange={(e) => setForm({ ...form, commissionValue: e.target.value })} />
         </div>
         <div className="sm:col-span-3 flex gap-2 justify-end">
@@ -169,8 +169,8 @@ function StaffOverrides({ rules, employees, services }) {
 
       <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Staff member *</label>
-          <select className="input" value={form.staffId} onChange={(e) => setForm({ ...form, staffId: e.target.value })} disabled={!!editId}>
+          <label htmlFor="override-staff" className="block text-xs font-medium text-gray-700 mb-1">Staff member *</label>
+          <select id="override-staff" className="input" value={form.staffId} onChange={(e) => setForm({ ...form, staffId: e.target.value })} disabled={!!editId}>
             <option value="">Select staff</option>
             {employees.filter((e) => e.active !== false).map((e) => (
               <option key={e.id} value={e.id}>{e.name}</option>
@@ -178,40 +178,40 @@ function StaffOverrides({ rules, employees, services }) {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Override scope *</label>
-          <select className="input" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value, serviceName: '', category: '' })}>
+          <label htmlFor="override-scope" className="block text-xs font-medium text-gray-700 mb-1">Override scope *</label>
+          <select id="override-scope" className="input" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value, serviceName: '', category: '' })}>
             <option value="service">Specific service</option>
             <option value="category">Service category</option>
           </select>
         </div>
         {form.scope === 'service' ? (
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Service *</label>
-            <select className="input" value={form.serviceName} onChange={(e) => setForm({ ...form, serviceName: e.target.value })}>
+            <label htmlFor="override-service" className="block text-xs font-medium text-gray-700 mb-1">Service *</label>
+            <select id="override-service" className="input" value={form.serviceName} onChange={(e) => setForm({ ...form, serviceName: e.target.value })}>
               <option value="">Select service</option>
               {services.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
           </div>
         ) : (
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Category *</label>
-            <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            <label htmlFor="override-category" className="block text-xs font-medium text-gray-700 mb-1">Category *</label>
+            <select id="override-category" className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               <option value="">Select category</option>
               {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
         )}
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Commission type *</label>
-          <select className="input" value={form.commissionType} onChange={(e) => setForm({ ...form, commissionType: e.target.value })}>
+          <label htmlFor="override-commission-type" className="block text-xs font-medium text-gray-700 mb-1">Commission type *</label>
+          <select id="override-commission-type" className="input" value={form.commissionType} onChange={(e) => setForm({ ...form, commissionType: e.target.value })}>
             {COMMISSION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+          <label htmlFor="override-commission-value" className="block text-xs font-medium text-gray-700 mb-1">
             {form.commissionType === 'percentage' ? 'Rate (%)' : 'Amount (₹)'} *
           </label>
-          <input className="input" type="number" min="0" max={form.commissionType === 'percentage' ? 100 : undefined}
+          <input id="override-commission-value" className="input" type="number" min="0" max={form.commissionType === 'percentage' ? 100 : undefined}
             value={form.commissionValue} onChange={(e) => setForm({ ...form, commissionValue: e.target.value })} />
         </div>
         <div className="sm:col-span-2 lg:col-span-1 flex gap-2 items-end">
@@ -312,8 +312,8 @@ function MonthlyTargets({ rules, employees }) {
 
       <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Applies to</label>
-          <select className="input" value={form.staffId} onChange={(e) => setForm({ ...form, staffId: e.target.value })}>
+          <label htmlFor="target-staff" className="block text-xs font-medium text-gray-700 mb-1">Applies to</label>
+          <select id="target-staff" className="input" value={form.staffId} onChange={(e) => setForm({ ...form, staffId: e.target.value })}>
             <option value="all">All staff</option>
             {employees.filter((e) => e.active !== false).map((e) => (
               <option key={e.id} value={e.id}>{e.name}</option>
@@ -321,36 +321,36 @@ function MonthlyTargets({ rules, employees }) {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Target metric *</label>
-          <select className="input" value={form.targetType} onChange={(e) => setForm({ ...form, targetType: e.target.value })}>
+          <label htmlFor="target-metric" className="block text-xs font-medium text-gray-700 mb-1">Target metric *</label>
+          <select id="target-metric" className="input" value={form.targetType} onChange={(e) => setForm({ ...form, targetType: e.target.value })}>
             <option value="services">Services completed (count)</option>
             <option value="revenue">Revenue generated (₹)</option>
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+          <label htmlFor="target-value" className="block text-xs font-medium text-gray-700 mb-1">
             {form.targetType === 'services' ? 'Target count *' : 'Target revenue (₹) *'}
           </label>
-          <input className="input" type="number" min="1" placeholder={form.targetType === 'services' ? 'e.g. 50' : 'e.g. 50000'}
+          <input id="target-value" className="input" type="number" min="1" placeholder={form.targetType === 'services' ? 'e.g. 50' : 'e.g. 50000'}
             value={form.targetValue} onChange={(e) => setForm({ ...form, targetValue: e.target.value })} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Bonus type *</label>
-          <select className="input" value={form.bonusType} onChange={(e) => setForm({ ...form, bonusType: e.target.value })}>
+          <label htmlFor="target-bonus-type" className="block text-xs font-medium text-gray-700 mb-1">Bonus type *</label>
+          <select id="target-bonus-type" className="input" value={form.bonusType} onChange={(e) => setForm({ ...form, bonusType: e.target.value })}>
             <option value="fixed">Fixed amount (₹)</option>
             <option value="percentage">% of monthly revenue</option>
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+          <label htmlFor="target-bonus-value" className="block text-xs font-medium text-gray-700 mb-1">
             {form.bonusType === 'fixed' ? 'Bonus amount (₹) *' : 'Bonus % of revenue *'}
           </label>
-          <input className="input" type="number" min="0" placeholder={form.bonusType === 'fixed' ? 'e.g. 2000' : 'e.g. 5'}
+          <input id="target-bonus-value" className="input" type="number" min="0" placeholder={form.bonusType === 'fixed' ? 'e.g. 2000' : 'e.g. 5'}
             value={form.bonusValue} onChange={(e) => setForm({ ...form, bonusValue: e.target.value })} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-          <input className="input" placeholder="e.g. Senior stylist target" value={form.description}
+          <label htmlFor="target-description" className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+          <input id="target-description" className="input" placeholder="e.g. Senior stylist target" value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </div>
         <div className="sm:col-span-2 lg:col-span-3 flex gap-2 justify-end">

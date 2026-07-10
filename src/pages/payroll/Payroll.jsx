@@ -87,13 +87,13 @@ function GenerateModal({ activeStaff, existingIds, month, onConfirm, onClose }) 
             <p className="text-xs font-semibold text-gray-700 mb-2">Attendance period</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">From</label>
-                <input type="date" className="input" value={dateFrom}
+                <label htmlFor="payroll-period-from" className="block text-xs font-medium text-gray-600 mb-1">From</label>
+                <input id="payroll-period-from" type="date" className="input" value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">To</label>
-                <input type="date" className="input" value={dateTo}
+                <label htmlFor="payroll-period-to" className="block text-xs font-medium text-gray-600 mb-1">To</label>
+                <input id="payroll-period-to" type="date" className="input" value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)} />
               </div>
             </div>
@@ -155,8 +155,8 @@ function GenerateModal({ activeStaff, existingIds, month, onConfirm, onClose }) 
           {/* Working days + attendance toggle */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Working days</label>
-              <input className="input" type="number" min="1" max={calendarDays}
+              <label htmlFor="payroll-working-days" className="block text-xs font-medium text-gray-700 mb-1">Working days</label>
+              <input id="payroll-working-days" className="input" type="number" min="1" max={calendarDays}
                 value={workingDays} onChange={(e) => setWorkingDays(e.target.value)} />
               <p className="text-xs text-gray-400 mt-1">{autoWorking} weekdays · {calendarDays} calendar days</p>
             </div>
@@ -179,23 +179,23 @@ function GenerateModal({ activeStaff, existingIds, month, onConfirm, onClose }) 
               <p className="text-xs font-semibold text-amber-800">Deduction rules</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Absent day</label>
-                  <select className="input text-xs" value={absentDeduct} onChange={(e) => setAbsentDeduct(e.target.value)}>
+                  <label htmlFor="deduct-absent" className="block text-xs font-medium text-gray-700 mb-1">Absent day</label>
+                  <select id="deduct-absent" className="input text-xs" value={absentDeduct} onChange={(e) => setAbsentDeduct(e.target.value)}>
                     <option value="full">Deduct 1 full day</option>
                     <option value="half">Deduct half day</option>
                     <option value="none">No deduction</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Half-day</label>
-                  <select className="input text-xs" value={halfDayDeduct} onChange={(e) => setHalfDayDeduct(e.target.value)}>
+                  <label htmlFor="deduct-halfday" className="block text-xs font-medium text-gray-700 mb-1">Half-day</label>
+                  <select id="deduct-halfday" className="input text-xs" value={halfDayDeduct} onChange={(e) => setHalfDayDeduct(e.target.value)}>
                     <option value="half">Deduct half day</option>
                     <option value="none">No deduction</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Leave day</label>
-                  <select className="input text-xs" value={leaveDeduct} onChange={(e) => setLeaveDeduct(e.target.value)}>
+                  <label htmlFor="deduct-leave" className="block text-xs font-medium text-gray-700 mb-1">Leave day</label>
+                  <select id="deduct-leave" className="input text-xs" value={leaveDeduct} onChange={(e) => setLeaveDeduct(e.target.value)}>
                     <option value="none">No deduction (paid)</option>
                     <option value="full">Deduct 1 day (unpaid)</option>
                   </select>
@@ -417,7 +417,7 @@ export default function Payroll() {
 
       {/* Month picker + summary */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
-        <input type="month" className="input w-full sm:w-44" value={month}
+        <input type="month" className="input w-full sm:w-44" aria-label="Payroll month" value={month}
           onChange={(e) => setMonth(e.target.value)} />
         <div className="flex flex-wrap gap-3">
           {[
@@ -439,35 +439,35 @@ export default function Payroll() {
           <p className="text-sm font-medium text-gray-800 mb-4">Edit — {editDoc.employeeName}</p>
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Base salary (₹)</label>
-              <input className="input" type="number" min="0" value={editForm.baseSalary}
+              <label htmlFor="sal-base" className="block text-xs font-medium text-gray-700 mb-1">Base salary (₹)</label>
+              <input id="sal-base" className="input" type="number" min="0" value={editForm.baseSalary}
                 onChange={(e) => setEditForm({ ...editForm, baseSalary: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Bonus (₹)</label>
-              <input className="input" type="number" min="0" value={editForm.bonus}
+              <label htmlFor="sal-bonus" className="block text-xs font-medium text-gray-700 mb-1">Bonus (₹)</label>
+              <input id="sal-bonus" className="input" type="number" min="0" value={editForm.bonus}
                 onChange={(e) => setEditForm({ ...editForm, bonus: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="sal-deductions" className="block text-xs font-medium text-gray-700 mb-1">
                 Deductions (₹) <span className="text-gray-400 font-normal">incl. absence</span>
               </label>
-              <input className="input" type="number" min="0" value={editForm.deductions}
+              <input id="sal-deductions" className="input" type="number" min="0" value={editForm.deductions}
                 onChange={(e) => setEditForm({ ...editForm, deductions: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Absence days</label>
-              <input className="input" type="number" min="0" step="0.5" value={editForm.absenceDays}
+              <label htmlFor="sal-absence-days" className="block text-xs font-medium text-gray-700 mb-1">Absence days</label>
+              <input id="sal-absence-days" className="input" type="number" min="0" step="0.5" value={editForm.absenceDays}
                 onChange={(e) => setEditForm({ ...editForm, absenceDays: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Net payable</label>
-              <input className="input bg-gray-50 font-semibold" disabled
+              <label htmlFor="sal-net" className="block text-xs font-medium text-gray-700 mb-1">Net payable</label>
+              <input id="sal-net" className="input bg-gray-50 font-semibold" disabled
                 value={`₹${Math.max(0, Number(editForm.baseSalary) + Number(editForm.bonus) - Number(editForm.deductions)).toLocaleString()}`} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
-              <input className="input" placeholder="e.g. Diwali bonus" value={editForm.notes}
+              <label htmlFor="sal-notes" className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+              <input id="sal-notes" className="input" placeholder="e.g. Diwali bonus" value={editForm.notes}
                 onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
             </div>
             <div className="sm:col-span-2 lg:col-span-3 flex items-center justify-between flex-wrap gap-3">

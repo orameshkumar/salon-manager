@@ -175,41 +175,41 @@ export default function Inventory() {
           </p>
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
-              <input className="input" required value={form.name}
+              <label htmlFor="inv-item-name" className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+              <input id="inv-item-name" className="input" required value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-              <select className="input" value={form.category}
+              <label htmlFor="inv-item-category" className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+              <select id="inv-item-category" className="input" value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 <option value="">Select</option>
                 {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">SKU</label>
-              <input className="input" value={form.sku}
+              <label htmlFor="inv-item-sku" className="block text-xs font-medium text-gray-700 mb-1">SKU</label>
+              <input id="inv-item-sku" className="input" value={form.sku}
                 onChange={(e) => setForm({ ...form, sku: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Quantity *</label>
-              <input className="input" type="number" min="0" required value={form.quantity}
+              <label htmlFor="inv-item-qty" className="block text-xs font-medium text-gray-700 mb-1">Quantity *</label>
+              <input id="inv-item-qty" className="input" type="number" min="0" required value={form.quantity}
                 onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Reorder level</label>
-              <input className="input" type="number" min="0" value={form.reorderLevel}
+              <label htmlFor="inv-item-reorder" className="block text-xs font-medium text-gray-700 mb-1">Reorder level</label>
+              <input id="inv-item-reorder" className="input" type="number" min="0" value={form.reorderLevel}
                 onChange={(e) => setForm({ ...form, reorderLevel: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
-              <input className="input" value={form.unit}
+              <label htmlFor="inv-item-unit" className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
+              <input id="inv-item-unit" className="input" value={form.unit}
                 onChange={(e) => setForm({ ...form, unit: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Cost price (₹)</label>
-              <input className="input" type="number" min="0" value={form.costPrice}
+              <label htmlFor="inv-item-cost" className="block text-xs font-medium text-gray-700 mb-1">Cost price (₹)</label>
+              <input id="inv-item-cost" className="input" type="number" min="0" value={form.costPrice}
                 onChange={(e) => setForm({ ...form, costPrice: e.target.value })} />
             </div>
             <div className="col-span-3 flex gap-2 justify-end">

@@ -155,7 +155,7 @@ function PaymentPanel({ inv, upi, onClose, onDone }) {
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label htmlFor="payment-amount" className="block text-xs font-medium text-gray-700 mb-1">
               Amount (₹)
               {!isPaid && balance > 0 && (
                 <button type="button" className="ml-2 text-brand-600 underline text-xs"
@@ -164,13 +164,13 @@ function PaymentPanel({ inv, upi, onClose, onDone }) {
                 </button>
               )}
             </label>
-            <input className="input" type="number" min="1" step="1"
+            <input id="payment-amount" className="input" type="number" min="1" step="1"
               placeholder={isPaid ? 'Enter amount' : `Remaining: ₹${balance}`}
               value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Mode</label>
-            <select className="input" value={mode} onChange={(e) => setMode(e.target.value)}>
+            <label htmlFor="payment-mode" className="block text-xs font-medium text-gray-700 mb-1">Mode</label>
+            <select id="payment-mode" className="input" value={mode} onChange={(e) => setMode(e.target.value)}>
               {PAYMENT_MODES.map((m) => <option key={m}>{m}</option>)}
             </select>
           </div>
@@ -387,13 +387,13 @@ export default function Billing() {
             {/* Customer */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
-                <input className="input" required value={customerName}
+                <label htmlFor="inv-cust-name" className="block text-xs font-medium text-gray-700 mb-1">Customer name *</label>
+                <input id="inv-cust-name" className="input" required value={customerName}
                   onChange={(e) => { setCustomerName(e.target.value); setCustomerId(''); setCustomerPoints(0) }} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Link to existing customer</label>
-                <select className="input" value={customerId} onChange={(e) => selectCustomer(e.target.value)}>
+                <label htmlFor="inv-cust-link" className="block text-xs font-medium text-gray-700 mb-1">Link to existing customer</label>
+                <select id="inv-cust-link" className="input" value={customerId} onChange={(e) => selectCustomer(e.target.value)}>
                   <option value="">Walk-in / new</option>
                   {customers.map((c) => <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>)}
                 </select>
@@ -403,8 +403,8 @@ export default function Billing() {
             {/* Staff */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Served by (staff)</label>
-                <select className="input" value={staffId}
+                <label htmlFor="inv-staff" className="block text-xs font-medium text-gray-700 mb-1">Served by (staff)</label>
+                <select id="inv-staff" className="input" value={staffId}
                   onChange={(e) => {
                     const emp = activeStaff.find((s) => s.id === e.target.value)
                     setStaffId(e.target.value)
@@ -431,8 +431,8 @@ export default function Billing() {
                 </div>
                 {canRedeem && subtotal > 0 && (
                   <div>
-                    <label className="block text-xs font-medium text-amber-800 mb-1">Redeem points</label>
-                    <input type="number" min="0" max={Math.floor(maxRedeemable / loyalty.redeemValue)}
+                    <label htmlFor="inv-redeem-pts" className="block text-xs font-medium text-amber-800 mb-1">Redeem points</label>
+                    <input id="inv-redeem-pts" type="number" min="0" max={Math.floor(maxRedeemable / loyalty.redeemValue)}
                       value={redeemPoints}
                       onChange={(e) => setRedeemPoints(Math.min(Number(e.target.value), Math.floor(maxRedeemable / loyalty.redeemValue)))}
                       className="input w-28 text-right" />
@@ -463,8 +463,8 @@ export default function Billing() {
             {/* Totals + discount */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Discount (₹)</label>
-                <input className="input" type="number" min="0" value={discount}
+                <label htmlFor="inv-discount" className="block text-xs font-medium text-gray-700 mb-1">Discount (₹)</label>
+                <input id="inv-discount" className="input" type="number" min="0" value={discount}
                   onChange={(e) => setDiscount(e.target.value)} />
               </div>
               <div className="card bg-brand-50 border-brand-200 text-right">
@@ -489,7 +489,7 @@ export default function Billing() {
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <label htmlFor="inv-init-amount" className="block text-xs font-medium text-gray-700 mb-1">
                       Amount collected (₹)
                       {total > 0 && (
                         <button type="button" className="ml-2 text-brand-600 underline text-xs"
@@ -498,15 +498,15 @@ export default function Billing() {
                         </button>
                       )}
                     </label>
-                    <input className="input" type="number" min="0" placeholder="0 — pay later"
+                    <input id="inv-init-amount" className="input" type="number" min="0" placeholder="0 — pay later"
                       value={initAmount} onChange={(e) => setInitAmount(e.target.value)} />
                     {initAmtNum > 0 && initBalance > 0 && (
                       <p className="text-xs text-amber-600 mt-1">Balance due after: ₹{initBalance}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Payment mode</label>
-                    <select className="input" value={initMode} onChange={(e) => setInitMode(e.target.value)}>
+                    <label htmlFor="inv-init-mode" className="block text-xs font-medium text-gray-700 mb-1">Payment mode</label>
+                    <select id="inv-init-mode" className="input" value={initMode} onChange={(e) => setInitMode(e.target.value)}>
                       {PAYMENT_MODES.map((m) => <option key={m}>{m}</option>)}
                     </select>
                     {initMode === 'UPI' && upi.upiId && (initAmtNum > 0 || total > 0) && (

@@ -112,23 +112,23 @@ export default function Customers() {
           </p>
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Full name *</label>
-              <input className="input" required value={form.name}
+              <label htmlFor="cust-name" className="block text-xs font-medium text-gray-700 mb-1">Full name *</label>
+              <input id="cust-name" className="input" required value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Phone *</label>
-              <input className="input" required value={form.phone}
+              <label htmlFor="cust-phone" className="block text-xs font-medium text-gray-700 mb-1">Phone *</label>
+              <input id="cust-phone" className="input" required value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-              <input className="input" type="email" value={form.email}
+              <label htmlFor="cust-email" className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+              <input id="cust-email" className="input" type="email" value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Allergies / notes</label>
-              <input className="input" value={form.allergies}
+              <label htmlFor="cust-allergies" className="block text-xs font-medium text-gray-700 mb-1">Allergies / notes</label>
+              <input id="cust-allergies" className="input" value={form.allergies}
                 onChange={(e) => setForm({ ...form, allergies: e.target.value })} />
             </div>
             <div className="col-span-2 flex gap-2 justify-end">
